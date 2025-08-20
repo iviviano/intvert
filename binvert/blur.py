@@ -73,7 +73,7 @@ def get_coeff_classes_2D(M, N, include_conjugates=True):
     return classes
 
 
-def get_lattice_level(k, l, M, N=1): # levels indexed 1, 2, ... starting at top level with coefficient (0, 0)
+def _get_lattice_level(k, l, M, N=1): # levels indexed 1, 2, ... starting at top level with coefficient (0, 0)
 
     order_M = M // np.gcd(k, M)
     order_N = N // np.gcd(l, N)
@@ -87,7 +87,7 @@ def select_coeffs_1D(N, Ls=[]):
 
 def select_coeffs_2D(M, N, Ls = []):
 
-    lattice_depth = get_lattice_level(1, 1, M, N)
+    lattice_depth = _get_lattice_level(1, 1, M, N)
     assert lattice_depth == sum(sp.factorint(np.lcm(M, N)).values()) + 1
 
     try:
@@ -105,7 +105,7 @@ def select_coeffs_2D(M, N, Ls = []):
             coeff_class = list(sorted(coeff_class))
             k, l = coeff_class[0]
             # print(f"k = {k}, l = {l}; level = {get_lattice_level(k, l, M, N)}")
-            L = Ls[-get_lattice_level(k, l, M, N)]
+            L = Ls[-_get_lattice_level(k, l, M, N)]
             # print(f"\t L = {L}")
             selected_coeffs = coeff_class[:L]
             all_selected_coeffs[d1, d2].add(frozenset(selected_coeffs))

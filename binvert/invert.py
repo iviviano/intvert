@@ -1,10 +1,10 @@
-if __name__ == "__main__":
-	import sys, os
-	sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from binvert.blur import *
-
 import fpylll as lll
+import numpy as np
+import gmpy2 as mp
+import sympy as sp
+from itertools import product
+
+from .blur import *
 
 _lll_params = {f"beta{n}" for n in range(4)} | {"delta"}
 
