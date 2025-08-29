@@ -312,7 +312,7 @@ class Test1DInversion(unittest.TestCase):
             with self.subTest(N=N):
                 signal = self.rand.integers(0, 2, N)
 
-                blurred = binvert.blur_1D(signal)
+                blurred = binvert.sample_1D(signal)
 
                 inverted = binvert.invert_1D(blurred)
 
@@ -325,18 +325,18 @@ class Test1DInversion(unittest.TestCase):
             with self.subTest(N=N):
 
                 signal = self.rand.integers(0, 2, N)
-                blurred = binvert.blur_1D(signal)
+                blurred = binvert.sample_1D(signal)
                 inverted = binvert.invert_1D(blurred)
                 self.assertFalse(np.allclose(signal - inverted, 0), f"Too large for 1 coefficient, double precision")
 
                 with mp.get_context() as c:
                     c.precision = 200
-                    blurred = binvert.blur_1D(signal)
+                    blurred = binvert.sample_1D(signal)
                     inverted = binvert.invert_1D(blurred, beta2=1e20)
                     self.assertTrue(np.allclose(signal - inverted, 0), f"works with larger beta2; actual: {inverted}; expected: {signal}")
 
                 known_coeffs = binvert.select_coeffs_1D(N, [10])
-                blurred = binvert.blur_1D(signal, known_coeffs=known_coeffs)
+                blurred = binvert.sample_1D(signal, known_coeffs=known_coeffs)
                 inverted = binvert.invert_1D(blurred, known_coeffs=known_coeffs)
                 self.assertTrue(np.allclose(signal - inverted, 0), f"Works with several coefficients; actual: {inverted}; expected: {signal}")
 
@@ -352,12 +352,34 @@ class Test1DInversion(unittest.TestCase):
             with self.subTest(N=N):
                 for _ in range(10):
                     signal = self.rand.integers(0, 2, N)
-                    blurred = binvert.blur_1D(signal, known_coeffs=known_coeffs[N])
+                    blurred = binvert.sample_1D(signal, known_coeffs=known_coeffs[N])
                     inverted = binvert.invert_1D(blurred, known_coeffs=known_coeffs[N])
                     self.assertTrue(np.allclose(signal - inverted, 0), f"actual: {inverted}; expected: {signal}")
                     inverted = binvert.invert_1D(blurred)
                     self.assertTrue(np.allclose(signal - inverted, 0), f"finds coefficients automatically; actual: {inverted}; expected: {signal}") 
 
+    def test_non_binary(self):
+
+        N = 19
+        signal = self.rand.binomial(19, .5, N)
+        blurred = binvert.sample_1D(signal)
+        inverted = binvert.invert_1D(blurred)
+        self.assertTrue(np.allclose(signal - inverted, 0))
+
+    @unittest.skip("depends on tolerance")
+    def test_large_M(self):
+
+        M = 5
+        for prec in range(53, 160, 50):
+            with mp.get_context() as c:
+                c.precision = prec
+                for N in range(80, 90, 1):
+                    known_coeffs = binvert.select_coeffs_1D(N, [M, 2])
+                    signal = self.rand.binomial(N, .5, (10, N))
+                    with self.subTest(N=N):
+                        blurred = binvert.sample_1D(signal, known_coeffs)
+                        inverted = binvert.invert_1D(blurred, known_coeffs)
+                        self.assertTrue(np.allclose(signal - inverted, 0))
 
 
     def test_vectorize(self):
@@ -365,12 +387,12 @@ class Test1DInversion(unittest.TestCase):
         N = 60
 
         signals = self.rand.integers(0, 2, (10, 5, N))
-        blurred = binvert.blur_1D(signals)
+        blurred = binvert.sample_1D(signals)
         inverted = binvert.invert_1D(blurred)
         self.assertTrue(np.allclose(signals - inverted, 0))
 
         known_coeffs = binvert.select_coeffs_1D(N, [2])
-        blurred = binvert.blur_1D(signals, known_coeffs)
+        blurred = binvert.sample_1D(signals, known_coeffs)
         inverted = binvert.invert_1D(blurred, known_coeffs=known_coeffs, beta3=1e3)
         self.assertTrue(np.allclose(signals - inverted, 0))
 
@@ -390,7 +412,7 @@ class Test2DInversion(unittest.TestCase):
             with self.subTest(M=M, N=N):
                 matrix = self.rand.integers(0, 2, (M, N))
 
-                blurred = binvert.blur_2D(matrix)
+                blurred = binvert.sample_2D(matrix)
 
                 inverted = binvert.invert_2D(blurred)
 
@@ -405,7 +427,7 @@ class Test2DInversion(unittest.TestCase):
                 with self.subTest(N=N):
                     signal = self.rand.integers(0, 2, (N, 1))
 
-                    blurred = binvert.blur_2D(signal)
+                    blurred = binvert.sample_2D(signal)
 
                     inverted = binvert.invert_2D(blurred)
 
@@ -418,18 +440,18 @@ class Test2DInversion(unittest.TestCase):
                 with self.subTest(N=N):
 
                     signal = self.rand.integers(0, 2, (1, N))
-                    blurred = binvert.blur_2D(signal)
+                    blurred = binvert.sample_2D(signal)
                     inverted = binvert.invert_2D(blurred)
                     self.assertFalse(np.allclose(signal - inverted, 0), f"Too large for 1 coefficient, double precision")
 
                     with mp.get_context() as c:
                         c.precision = 200
-                        blurred = binvert.blur_2D(signal)
+                        blurred = binvert.sample_2D(signal)
                         inverted = binvert.invert_2D(blurred, beta2=1e20)
                         self.assertTrue(np.allclose(signal - inverted, 0), f"works with larger beta2; actual: {inverted}; expected: {signal}")
 
                     known_coeffs = binvert.select_coeffs_2D(1, N, [10])
-                    blurred = binvert.blur_2D(signal, known_coeffs=known_coeffs)
+                    blurred = binvert.sample_2D(signal, known_coeffs=known_coeffs)
                     inverted = binvert.invert_2D(blurred, known_coeffs=known_coeffs)
                     self.assertTrue(np.allclose(signal - inverted, 0), f"Works with several coefficients; actual: {inverted}; expected: {signal}")
 
@@ -467,7 +489,7 @@ class Test2DInversion(unittest.TestCase):
                 with self.subTest(M=M, N=N):
                     for _ in range(10):
                         signal = self.rand.integers(0, 2, (M, N))
-                        blurred = binvert.blur_2D(signal, known_coeffs=known_coeffs[M, N])
+                        blurred = binvert.sample_2D(signal, known_coeffs=known_coeffs[M, N])
                         inverted = binvert.invert_2D(blurred, known_coeffs=known_coeffs[M, N])
                         self.assertTrue(np.allclose(signal - inverted, 0), f"works when given known coefficients; actual: {inverted}; expected: {signal}") 
                         inverted = binvert.invert_2D(blurred)
@@ -489,7 +511,7 @@ class Test2DInversion(unittest.TestCase):
             with self.subTest(M=M, N=N):
 
                 signal = self.rand.integers(0, 2, (M, N))
-                blurred = binvert.blur_2D(signal)
+                blurred = binvert.sample_2D(signal)
                 try:
                     inverted = binvert.invert_2D(blurred)
                     correct = np.allclose(signal - inverted, 0)
@@ -500,12 +522,12 @@ class Test2DInversion(unittest.TestCase):
                 
                 with mp.get_context() as c:
                     c.precision = 200
-                    blurred = binvert.blur_2D(signal)
+                    blurred = binvert.sample_2D(signal)
                     inverted = binvert.invert_2D(blurred, beta2=1e20)
                     self.assertTrue(np.allclose(signal - inverted, 0), f"works with larger beta2; actual: {inverted}; expected: {signal}")
 
                 known_coeffs = binvert.select_coeffs_2D(M, N, [5])
-                blurred = binvert.blur_2D(signal, known_coeffs=known_coeffs)
+                blurred = binvert.sample_2D(signal, known_coeffs=known_coeffs)
                 inverted = binvert.invert_2D(blurred, known_coeffs=known_coeffs)
                 self.assertTrue(np.allclose(signal - inverted, 0), f"Works with several coefficients; actual: {inverted}; expected: {signal}")
 
@@ -516,7 +538,7 @@ class Test2DInversion(unittest.TestCase):
 
             with self.subTest(M=M, N=N):
                 signal = self.rand.integers(0, 5, (M, N))
-                blurred = binvert.blur_2D(signal)
+                blurred = binvert.sample_2D(signal)
                 inverted = binvert.invert_2D(blurred)
                 self.assertTrue(np.allclose(signal - inverted, 0), f"actual: {inverted}; expected: {signal}")
 
@@ -526,11 +548,12 @@ class Test2DInversion(unittest.TestCase):
         M, N = 30, 15
 
         signals = self.rand.integers(0, 2, (10, M, N))
-        blurred = binvert.blur_2D(signals)
+        blurred = binvert.sample_2D(signals)
         inverted = binvert.invert_2D(blurred)
         self.assertTrue(np.allclose(signals - inverted, 0))
 
         known_coeffs = binvert.select_coeffs_2D(M, N, [2])
-        blurred = binvert.blur_2D(signals, known_coeffs)
+        blurred = binvert.sample_2D(signals, known_coeffs)
         inverted = binvert.invert_2D(blurred, known_coeffs=known_coeffs, beta3=1e3)
         self.assertTrue(np.allclose(signals - inverted, 0))
+

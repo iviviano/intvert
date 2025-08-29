@@ -1,7 +1,7 @@
 """Description
 """
 
-from .blur import (
+from .sample import (
 	mp_dft,
 	mp_dft2,
 	mp_idft,
@@ -13,8 +13,8 @@ from .blur import (
 	get_coeff_classes_2D,
 	select_coeffs_1D,
 	select_coeffs_2D,
-	blur_1D,
-	blur_2D,
+	sample_1D,
+	sample_2D,
 )
 
 from .invert import (
@@ -22,4 +22,4 @@ from .invert import (
 	invert_2D,
 )
 
-__all__ = ["blur_1D", "blur_2D", "invert_1D", "invert_2D"]
+__all__ = ["sample_1D", "sample_2D", "invert_1D", "invert_2D"]
