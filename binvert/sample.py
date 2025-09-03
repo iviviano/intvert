@@ -26,7 +26,7 @@ def mp_dft(signal):
     The DFT convention used in this implementation is
     .. math:: \tilde{x}_k = \sum_{n = 0}^{N - 1}x_n e^{-2\pi{\rm i}nk/N},
     where :math:`{\bf x}` is an array of length `N`. The inverse DFT is given by
-    .. math:: x_n = \frac{1}{N}\sum_{k = 0}^{N - 1}\tilde{x}_k e^{-2\pi{\rm i}nk/N}.
+    .. math:: x_n = \frac{1}{N}\sum_{k = 0}^{N - 1}\tilde{x}_k e^{2\pi{\rm i}nk/N}.
     """
 
     if mp.get_context().precision <= 53:
@@ -41,6 +41,30 @@ def mp_dft(signal):
 
 @np.vectorize(signature="(m,n)->(m,n)")
 def mp_dft2(signal):
+    """Compute the 2D discrete Fourier transform of a signal.
+
+    This function computes the 2D discrete Fourier transform (DFT) along the last two axes of `signal`.
+
+    Parameters
+    ----------
+    signal : array_like 
+        Input signal, can be complex.
+
+    Returns
+    -------
+    mpc ndarray
+        The 2D DFT of `signal` along the last two axes.
+
+    Notes
+    -----
+    This function is implemented with `mp_dft`. For algorithm notes, see `mp_dft`.
+
+    The DFT convention used in this implementation is
+    .. math:: \tilde{x}_{k, l} = \sum_{m = 0}^{N_1 - 1}\sum_{n = 0}^{N_2 - 1}X_{m,n} e^{-2\pi{\rm i}(mk/N_1 + nl/N_2)},
+    where :math:`{\bf X}` is an :math:`N_1 \times N_2` matrix. The inverse DFT is given by
+    .. math:: X_{m, n} = \sum_{k = 0}^{N_1 - 1}\sum_{l = 0}^{N_2 - 1}\tilde{X}_{k,l} e^{2\pi{\rm i}(mk/N_1 + nl/N_2)},
+    """
+
 
     intermediate = [mp_dft(row) for row in signal]
     return np.transpose([mp_dft(row) for row in np.transpose(intermediate)])
@@ -63,6 +87,19 @@ def mp_idft(signal):
     Notes
     -----
     This function is implemented with `mp_dft`. For conventions and algorithm notes, see `mp_dft`.
+
+    Examples
+    --------
+
+    When more than 53 bits of precision are used, `mp_dft` and `mp_idft` yield higher numerical accuracy than `np.fft.fft` and `np.fft.ifft`:
+
+    >>> signal = np.ones(101)
+    >>> max(abs(np.fft.ifft(np.fft.fft(signal)) - signal))
+    np.float64(1.0174987266641335e-15)
+    >>> with gmpy2.get_context() as c:
+    ...     c.precision = 200
+    ...     max(abs(binvert.mp_idft(binvert.mp_dft(signal)) - signal))
+    mpfr('1.866904583358342512143219216134037272177075650616350139930335e-60',200)
     """
 
     return np.conj(mp_dft(np.conj(signal))) / signal.shape[-1]
@@ -95,9 +132,9 @@ def _to_1D(coeff_classes_2D):
 
  
 def get_coeff_classes_1D(N, include_conjugates=True):
-    """Returns a dictionary of classes of DFT coefficient frequencies for an integer signal.
+    """Returns a dictionary of classes of DFT coefficient frequencies for a 1D integer signal.
 
-    Constructs a dictionary mapping divisors of `N` to sets of equivalent DFT coefficient frequencies for an integer signal of length `N`. The divisor d is mapped to a set of DFT frequencies containing all integers between 0 and `N` - 1 whose greatest common divisor with `N` is d. If `include_conjugates` is `False`, frequencies greater than or equal to `N` / 2 are excluded.
+    Constructs a dictionary mapping divisors of `N` to sets of equivalent DFT coefficient frequencies for a 1D integer signal of length `N`. The divisor d is mapped to a set of DFT frequencies containing all integers between 0 and `N` - 1 whose greatest common divisor with `N` is d. If `include_conjugates` is `False`, frequencies greater than or equal to `N` / 2 are excluded.
 
     Parameters
     ----------
@@ -128,7 +165,6 @@ def get_coeff_classes_1D(N, include_conjugates=True):
     
  
 def get_coeff_classes_2D(M, N, include_conjugates=True):
-
     found = np.zeros((M, N), dtype=bool)
 
     classes = {}
@@ -165,10 +201,11 @@ def _get_lattice_level(k, l, M, N=1): # levels indexed 1, 2, ... starting at top
     return sum(sp.factorint(order).values()) + 1
 
 
+    # Constructs a dictionary mapping divisors of `N` to sets of equivalent DFT coefficient frequencies for an integer signal of length `N`. The divisor d is mapped to a set of DFT frequencies containing integers between 0 and `N` - 1 whose greatest common divisor with `N` is d. The number of frequencies in this set is determined by `Ls`. If `Ls` is an integer, the number of frequencies in `selected[1]` is `Ls`, and each other set of frequencies has one element. If `Ls` is a list, `Ls[i]` is the number of frequencies in `selected[d]` if `d` generates a cyclic subgroup at the `i`'th level of the subgroup lattice of :math:`\mathbb{Z}_N`. If `Ls[i]` is larger than the number of generators of `selected[d]` which are between `0` and `N / 2`, `selected[d]` is just this maximal set of such generators.
 def select_coeffs_1D(N, Ls=[]):
     """Selects a set of DFT coefficient frequencies.
 
-    Constructs a dictionary mapping divisors of `N` to sets of equivalent DFT coefficient frequencies for an integer signal of length `N`. The divisor d is mapped to a set of DFT frequencies containing integers between 0 and `N` - 1 whose greatest common divisor with `N` is d. The number of frequencies in this set is determined by `Ls`. If `Ls` is an integer, the number of frequencies in `selected[1]` is `Ls`, and each other set of frequencies has one element. If `Ls` is a list, `Ls[i]` is the number of frequencies in `selected[d]` if `d` generates a cyclic subgroup at the `i`'th level of the subgroup lattice of :math:`\mathbb{Z}_N`. If `Ls[i]` is larger than the number of generators of `selected[d]` which are between `0` and `N / 2`, `selected[d]` is just this maximal set of such generators.
+    Constructs a dictionary mapping divisors of `N` to sets of equivalent DFT coefficient frequencies for an integer signal of length `N`. The divisor d is mapped to a set of DFT frequencies containing integers between 0 and `N` - 1 whose greatest common divisor with `N` is d. The number of frequencies in this set is determined by `Ls`. If `Ls` is an integer, the number of frequencies in set of frequencies will be at most `Ls`. If `Ls` is a list, `Ls[i]` is the number of frequencies in `selected[d]` if `d` generates a cyclic subgroup at the `i`'th level of the subgroup lattice of :math:`\mathbb{Z}_N`. If `Ls[i]` is larger than the number of generators of `selected[d]` which are between `0` and `N / 2`, `selected[d]` is just this maximal set of such generators.
 
     Parameters
     ----------
@@ -190,12 +227,12 @@ def select_coeffs_1D(N, Ls=[]):
     By default, get 1 element of each coefficient class
 
     >>> binvert.select_coeffs_1D(10, 2)
-    {10: {0}, 1: {1, 3}, 2: {2}, 5: {5}} 
-
-    If Ls is an integer, there are Ls generators in the top level of the subgroup lattice class
-
-    >>> binvert.select_coeffs_1D(10, [2, 2]) 
     {10: {0}, 1: {1, 3}, 2: {2, 4}, 5: {5}} 
+
+    If Ls is an integer, there are Ls generators in every class with with more than one generator between 0 and N / 2.
+
+    >>> binvert.select_coeffs_1D(10, [2]) 
+    {10: {0}, 1: {1, 3}, 2: {2, 4}, 5: {5}}
     
     If Ls is a list of length 2, all classes on the top two levels of the lattice may have up to two generators. This is realized for d = 1 and d = 2. However, there is only one generator for the subgroup corresponding to d = 5.
     """ 
@@ -204,16 +241,53 @@ def select_coeffs_1D(N, Ls=[]):
 
 
 def select_coeffs_2D(M, N, Ls = []):
+    """Selects a set of DFT coefficient frequencies.
+
+    Constructs a dictionary mapping divisors of `M` and `N` to sets of equivalent DFT coefficient frequencies for an `(M,N)` integer matrix. The pair of divisors `(d1, d2)` is mapped to a set of frozensets of DFT frequencies. Each frozenset contains equivalent frequencies pairs `(k, l)` where the greatest common divisor of `k` with `M` is `d1` and the greatest common divisor of `l` with `N` is `d2`. The number of frequencies in each frozen set is determined by `Ls`. If `Ls` is an integer, the number of frequencies in set of frequencies will be at most `Ls`. If `Ls` is a list, `Ls[i]` is the maximum number of frequencies in `selected[d1, d2]` if `(d1, d2)` generates a cyclic subgroup at the `i`'th level of the cyclic subgroup lattice of :math:`\mathbb{Z}_M\times\mathbb{Z}_N`. 
+
+    Parameters
+    ----------
+    M : int
+        First dimension of the integer signal.
+    N : int
+        Second dimension of the integer signal.
+    Ls : int or list, optional
+        Number of coefficients to include for each class, by default []
+
+    Returns
+    -------
+    selected: Dict[int, Set[Frozenset[Tuple[int, int]]]]
+        Dictionary of selected coefficients.
+
+    Examples
+    --------
+    >>> binvert.select_coeffs_2D(2, 10)
+    {(2, 10): {frozenset({(0, 0)})}, (1, 1): {frozenset({(1, 1)})}, (2, 1): {frozenset({(0, 1)})}, (1, 2): {frozenset({(1, 2)})}, (1, 5): {frozenset({(1, 5)})}, (1, 10): {frozenset({(1, 0)})}}}, (2, 2): {frozenset({(0, 2)})}, (2, 5): {frozenset({(0, 5)})}} 
+
+    By default, get 1 element of each coefficient class
+
+    >>> binvert.select_coeffs_2D(2, 10, 2)
+    {(2, 10): {frozenset({(0, 0)})}, (2, 1): {frozenset({(0, 1), (0, 3)})}, (2, 2): {frozenset({(0, 2), (0, 4)})}, (2, 5): {frozenset({(0, 5)})}, (1, 10): {frozenset({(1, 0)})}, (1, 1): {frozenset({(1, 1), (1, 3)})}, (1, 2): {frozenset({(1, 2), (1, 4)})}, (1, 5): {frozenset({(1, 5)})}}
+
+    If Ls is an integer, there are Ls generators in the top level of the subgroup lattice class
+
+    >>> binvert.select_coeffs_2D(2, 10, [2, 2]) 
+    {(2, 10): {frozenset({(0, 0)})}, (2, 1): {frozenset({(0, 1), (0, 3)})}, (2, 2): {frozenset({(0, 2), (0, 4)})}, (2, 5): {frozenset({(0, 5)})}, (1, 10): {frozenset({(1, 0)})}, (1, 1): {frozenset({(1, 1), (1, 3)})}, (1, 2): {frozenset({(1, 2), (1, 4)})}, (1, 5): {frozenset({(1, 5)})}}
+    
+    If Ls is a list of length 2, all classes on the top two levels of the lattice may have up to two generators. This is realized for the classes generated by `(1, 1)`, `(1, 2)`, `(0, 1)`, and `(0, 2)`. However, there is only one generator for the classes generated by `(0, 5)`, `(1, 5)`, and `(1, 0)`.
+    """ 
 
     lattice_depth = _get_lattice_level(1, 1, M, N)
     assert lattice_depth == sum(sp.factorint(np.lcm(M, N)).values()) + 1
 
     try:
-        Ls = [L for L in Ls]
+        # Ls = [L for L in Ls]
+        Ls = [L for L in Ls] + [1] * (lattice_depth - len(Ls))
     except TypeError:
-        Ls = [Ls]
-    finally:
-        Ls = Ls + [1] * (lattice_depth - len(Ls))
+        # Ls = [Ls]
+        Ls = [Ls] * lattice_depth
+    # finally:
+    #     Ls = Ls + [1] * (lattice_depth - len(Ls))
 
     all_selected_coeffs = {}
 

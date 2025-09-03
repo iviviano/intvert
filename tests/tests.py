@@ -246,7 +246,7 @@ class TestCoeffs(unittest.TestCase):
         }
 
         for N in expected:
-            for L in [2, [2]]:
+            for L in [[2]]:
                 with self.subTest(N=N, L=L):
                     actual = select_coeffs(N, Ls=L)
                     self.assertDictEqual(actual, expected[N])
@@ -257,14 +257,14 @@ class TestCoeffs(unittest.TestCase):
             5: {5: {0}, 1: {1, 2}},
             6: {6: {0}, 1: {1}, 2: {2}, 3: {3}},
             7: {7: {0}, 1: {1, 2}},
-            10: {10: {0}, 1: {1, 3}, 2: {2}, 5: {5}},
-            20: {20: {0}, 1: {1, 3}, 2: {2}, 4: {4}, 5: {5}, 10: {10}},
-            25: {25: {0}, 1: {1, 2}, 5: {5}},
-            30: {30: {0}, 1: {1, 7}, 2: {2}, 3: {3}, 5: {5}, 6: {6}, 10: {10}, 15: {15}},
+            10: {10: {0}, 1: {1, 3}, 2: {2, 4}, 5: {5}},
+            20: {20: {0}, 1: {1, 3}, 2: {2, 6}, 4: {4, 8}, 5: {5}, 10: {10}},
+            25: {25: {0}, 1: {1, 2}, 5: {5, 10}},
+            30: {30: {0}, 1: {1, 7}, 2: {2, 4}, 3: {3, 9}, 5: {5}, 6: {6, 12}, 10: {10}, 15: {15}},
         }
 
         for N in expected:
-            for L in [2, [2]]:
+            for L in [2]:
                 with self.subTest(N=N, L=L):
                     actual = select_coeffs(N, L)
                     self.assertDictEqual(actual, expected[N])
@@ -289,9 +289,10 @@ class TestCoeffs(unittest.TestCase):
                 actual = select_coeffs(N, Ls=L)
                 self.assertDictEqual(actual, expected[N])
 
-        with self.subTest(N=59, Ls=[5]):
-            actual = select_coeffs(59, Ls=[5])
-            self.assertDictEqual(actual, {59: {0}, 1: {1, 2, 3, 4, 5}})
+        for Ls in [5, [5]]:
+            with self.subTest(N=59, Ls=Ls):
+                actual = select_coeffs(59, Ls=Ls)
+                self.assertDictEqual(actual, {59: {0}, 1: {1, 2, 3, 4, 5}})
 
 
     def test_select_coeffs_2D(self):

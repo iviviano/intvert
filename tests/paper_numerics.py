@@ -80,7 +80,8 @@ class LatticeTheory(unittest.TestCase):
         upper_int = N
 
         Ms = np.arange(1, 4)
-        fig, ax = plt.subplots(1, len(Ms), figsize=(12, 5))
+        # fig, ax = plt.subplots(1, len(Ms), figsize=(12, 5))
+        fig, ax = plt.subplots(1, 1+ len(Ms), figsize=(12, 5))
         low = np.inf
         high = 0
         signals = self.rand.binomial(upper_int, .5, (int(1e5), N))
@@ -93,82 +94,81 @@ class LatticeTheory(unittest.TestCase):
             hist, bin_edges = np.histogram(Ks, bins=30, density=True)
             x = (bin_edges[:-1] + bin_edges[1:]) / 2
             ax[M - 1].plot(x, hist)
+            ax[-1].plot(x, hist, label=f"$M = {M}$")
 
             # ax[M - 1].hist(Ks, bins='fd', label=f"M={M}", density=True)
 
-            ax[M - 1].vlines(.5 * np.sqrt((reduced(N) - 2 * M) * upper_int), 0, .25, color='red', label="Theoretical $K$", linestyle='dashed')
-            ax[M - 1].vlines(np.mean(Ks), 0, .25, color='yellow', label="Average", linestyle='dashed')
+            def height(val):
+                xl, xr = x[x < val][-1], x[x > val][0]
+                yl, yr = hist[x < val][-1], hist[x > val][0]
+                slope = (yr - yl) / (xr - xl)
+                return yl + slope * (val - xl) - 1e-3
+
+
+            theory = .5 * np.sqrt((reduced(N) - 2 * M) * upper_int)
+            ax[M - 1].vlines(theory, 0, height(theory), color='red', label="Theoretical $K$", linestyle='dashed')
+            mc = np.mean(Ks)
+            ax[M - 1].vlines(mc, 0, height(mc), color='blue', label="Average", linestyle='dashed')
 
             low = min(low, min(Ks))
             high = max(high, max(Ks))
 
-        for ax in ax.flatten():
+        for ax, title in zip(ax.flatten(), ["$M = 1$", "$M = 2$", "$M = 3$", "All $M$"]):
             ax.set_xlabel(r"$K$")
             ax.set_xlim(low, high)
             ax.set_ylim(0, .25)
-            # ax.legend()
+            ax.set_title(title)
+        ax.legend()
 
         plt.subplots_adjust(wspace=0.6)
 
         save_fig(f"K_hist_N={N}")
         plt.show()
 
-    def test_N(self):
+    def test_N_M(self):
 
         Ns = np.arange(19, 61)
-        Ms = np.arange(1, 3)
+        Ms = np.arange(1, 4)
 
-        # fig, ax = plt.subplots(1, Ms.size + 1)
-        fig, ax = plt.subplots(1, Ms.size)
+        fig, ax = plt.subplots(1, 2)
         fig.set_size_inches(12, 5)
+
+        ca = ax[0]
 
         for M in Ms:
             beta2s = []
             for N in Ns:
                 beta2s.append(theoretical_beta2(N, M, N))
-            ca = ax[M - 1]
-
-            ca.set_title(f"$M = {M}$")
-            ca.plot(Ns, beta2s)
-
+            ca.plot(Ns, beta2s, label=f"$M = {M}$")
             ca.set_ylabel(r"$\beta_2$")
             ca.set_xlabel(r"$N$")
             ca.set_yscale('log')
 
-        # ca = ax[-1]
-        # ca.plot(Ns, np.vectorize(sp.divisor_count)(Ns))
-        # ca.set_xlabel(r"$N$")
-        # ca.set_ylabel(r"$\tau(N)$")
+            ca.legend()
 
-        save_fig("N_dep")
-        plt.show()
-
-    def test_M(self):
-
-        Ns = [30, 31]
-
-        fig, ax = plt.subplots(1, len(Ns))
-        fig.set_size_inches(12, 5)
-
+        Ns = np.arange(29, 35)
+        ca = ax[1]
         for i, N in enumerate(Ns):
             betas = []
             Ms = np.arange(1, (reduced(N)) // 2)
             for M in Ms:
                 betas.append(theoretical_beta2(N, M, N))
-            ca = ax[i]
-            ca.plot(Ms, betas)
+            ca.plot(Ms, betas, label=f"$N = {N}$")
 
             ca.set_title(f"$N = {N}$")
             ca.set_xlabel(f"$M$")
             ca.set_ylabel(r"$\beta_2$")
             ca.set_yscale('log')
 
-        savefig("M_dep")
+            ca.legend()
+
+        save_fig("N_M_dep")
         plt.show()
 
+    
     def test_beta0(self):
 
-        N = 31
+        N = 30
         Ms = np.arange(1, 3)
 
         fig, ax = plt.subplots(1, len(Ms))
@@ -192,8 +192,6 @@ class LatticeTheory(unittest.TestCase):
         save_fig("beta0_dep")
         plt.show()
 
-    
-    
 class Lattice(unittest.TestCase):
 
     def setUp(self):
@@ -300,10 +298,10 @@ class Lattice(unittest.TestCase):
         save_fig("beta_hist_prime_n=%d" % self.n_sig)
         plt.show()
 
-    def test_percentiles(self, step = 1e5, n_steps = 30, N = 90, targets = None):
+    def test_percentiles(self, step = 1e5, n_steps = 30, N = 19, targets = None, Ms=[], upper_int=None):
 
         fname = f"../data/percentiles_n={self.n_sig}_L={self.upper_int}"
-        upper_int = self.upper_int if self.upper_int else N
+        upper_int = upper_int if upper_int else self.upper_int if self.upper_int else N
 
         with mp.get_context() as context:
 
@@ -313,7 +311,7 @@ class Lattice(unittest.TestCase):
 
             signals = self.rand.binomial(upper_int, .5, (self.n_sig, N))
 
-            for M in range(2, 4):
+            for M in Ms if Ms else range(1, 2):
 
                 known_coeffs = shallow_select_coeffs(N, M)
                 blurred_signals = binvert.sample_1D(signals, known_coeffs)
@@ -365,7 +363,7 @@ class Lattice(unittest.TestCase):
                 50: 0,
                 90: 0,
                 100: 0
-                } for N in range(1, 101) for M in range(1, int(np.sqrt(N)) + 1)}
+                } for N in range(19, 101) for M in range(1, 4)}
 
             table = pd.DataFrame(table)
 
@@ -386,7 +384,8 @@ class Lattice(unittest.TestCase):
         print("\midrule")
 
         # Ns = self.Ns
-        Ns = [19, 24, 25, 27, 30, 31, 32, 39, 45, 47, 49, 50, 60]
+        # Ns = [19, 24, 25, 27, 30, 31, 32, 39, 45, 47, 49, 50, 60, 90]
+        Ns = [19, 38] 
 
         pipe = '\\textbar'
         for N in Ns:
@@ -405,29 +404,97 @@ class Lattice(unittest.TestCase):
 
         print("\\end{tabular}")
     
-    def make_percentile_plot(self):
+    # def make_percentile_plot(self):
 
-        table = pd.read_pickle(f"../data/percentiles_prime_n={self.n_sig}")
+    #     table = pd.read_pickle(f"../data/percentiles_prime_n={self.n_sig}")
 
-        # ax = table.plot(x="M", y=["Theory", 50, 90, 100], logy=True, subplots=True, layout=(1, len(self.Ns)), marker='o', title="Percentiles of $\\beta_2$ for prime $N$")
-        fig, ax = plt.subplots(1, len(self.Ns), figsize=(12, 5))
+    #     # ax = table.plot(x="M", y=["Theory", 50, 90, 100], logy=True, subplots=True, layout=(1, len(self.Ns)), marker='o', title="Percentiles of $\\beta_2$ for prime $N$")
+    #     fig, ax = plt.subplots(1, len(self.Ns), figsize=(12, 5))
 
-        for i, N in enumerate(self.Ns):
-            ax[i].set_title(r"$N = %d$" % N)
-            print(table[N])
-            ax[i].plot(table[N].T, label=["Theory", "50th", "90th", "100th"], marker='o')
+    #     for i, N in enumerate(self.Ns):
+    #         ax[i].set_title(r"$N = %d$" % N)
+    #         print(table[N])
+    #         ax[i].plot(table[N].T, label=["Theory", "50th", "90th", "100th"], marker='o')
 
-            ax[i].set_yscale("log")
-            ax[i].set_xlabel(r"$M$")
-            ax[i].set_ylabel(r"$\beta_2$")
-            ax[i].legend()
+    #         ax[i].set_yscale("log")
+    #         ax[i].set_xlabel(r"$M$")
+    #         ax[i].set_ylabel(r"$\beta_2$")
+    #         ax[i].legend()
 
-            ax[i].set_xticks(range(1, int(np.sqrt(N)) + 1))
+    #         ax[i].set_xticks(range(1, int(np.sqrt(N)) + 1))
 
-        plt.subplots_adjust(wspace=0.6)
+    #     plt.subplots_adjust(wspace=0.6)
 
-        save_fig("percentiles_n=%d" % self.n_sig)
-        plt.show()
+    #     save_fig("percentiles_n=%d" % self.n_sig)
+    #     plt.show()
+
+    def test_subproblem(self):
+
+        self.upper_int = "subproblem"
+
+        fname = f"../data/percentiles_n={self.n_sig}_L=subproblem"
+        results = pd.read_pickle(fname)
+        
+        for N in [19, 38]:
+            L = results[N, 1].loc['L']
+            print(f"Testing N = {N}, L = {L}")
+            self.test_percentiles(N=N, Ms=[1], upper_int=L)
+
+    def make_subproblem_table(self):
+
+        fname = f"../data/percentiles_n={self.n_sig}_L=subproblem"
+
+        Ns = [19, 38]
+        Ls = [40, 20]
+        targets = [50, 90, 100]
+
+        try:
+
+            open(fname)
+
+        except FileNotFoundError:
+
+            table = {(N, M): {"L": L, 'theory': theoretical_beta2(N, M, L)} | {target: np.nan for target in targets} for N, L in zip(Ns, Ls) for M in range(1, 4)}
+
+            table = pd.DataFrame(table)
+            table.to_pickle(fname)
+
+        finally:
+
+            table = pd.read_pickle(fname)
+
+        print(table)
+        print()
+
+        print(r"\begin{tabular}{ccc|cccc}")
+
+        header = "$N$ & $M$ & $L$ & Theoretical $\\beta_2$"
+        for target in targets:
+            header += f" & {target}'th percentile $\\beta_2$"
+
+        print(header + "\\\\")
+
+        print("\midrule")
+        print("\midrule")
+
+        for N, L in zip(Ns, Ls):
+
+            for M in range(1, 2):
+
+                print(f"{N} & {M} & {L} & {table[(N, M)].loc['theory']:.2e}", end='')
+
+                for target in targets:
+                    print(f" & {table[(N, M)].loc[target]:.2e}", end='')
+
+                print("\\\\")
+
+            print(r"\midrule")
+
+        print(r"\end{tabular}")
+
+
+
+
 
 
     def test_K(self, N=range(92, 101)):
@@ -777,7 +844,7 @@ class Matrix(unittest.TestCase):
         
         self.rand = np.random.default_rng(86547689)
 
-        self.n_sig = 10
+        self.n_sig = 100
 
     def test_rect(self, N1=30, N2=40):
 
@@ -785,6 +852,7 @@ class Matrix(unittest.TestCase):
         results = pd.read_pickle(fname)
 
         signals = self.rand.integers(0, 2, (self.n_sig, N1, N2))
+        print(f"N1 x N2 = {N1} x {N2}")
 
         for M in range(1, 10):
             print(f"M = {M}")
@@ -813,6 +881,17 @@ class Matrix(unittest.TestCase):
             if correct == self.n_sig:
                 break
 
+    def test_all_rect(self):
+
+        Ns = [(4, 6), (8, 10), (9, 11), (11, 13), (12, 18), (9, 21), (30, 40), (36, 45)]
+        last = np.load("../data/rect_last.npy")
+
+        for i in range(last + 1, len(Ns)):
+            N1, N2 = Ns[i]
+
+            self.test_rect(N1, N2)
+            np.save("../data/rect_last.npy", i)
+
     
     def make_rect_table(self):
 
@@ -826,14 +905,16 @@ class Matrix(unittest.TestCase):
         except FileNotFoundError:
 
             table = {(N1, N2, M): {
-                "n_rec": np.nan,
+                "n_rec": -1,
                 "time": np.nan,
-                "n_coeffs": np.nan,
+                "n_coeffs": -1,
                 } for N1, N2 in Ns for M in range(10)}
 
             table = pd.DataFrame(table)
 
             table.to_pickle(fname)
+
+            np.save("../data/rect_last.npy", -1)
 
         finally:
 
@@ -865,7 +946,7 @@ class Matrix(unittest.TestCase):
 
                 if M != 1:
                     print("&", end='')
-                print(f"& {M} & {int(n_coeffs)} & {float(beta):.2e} & {n_rec / self.n_sig: .1f} & {time/self.n_sig: .2f} \\\\")
+                print(f"& {M} & {int(n_coeffs)} & {float(beta):.2e} & {n_rec / self.n_sig: .2f} & {time/self.n_sig: .2f} \\\\")
 
                 if n_rec == self.n_sig:
                     break
@@ -882,7 +963,8 @@ class Matrix(unittest.TestCase):
         image = Image.open("../Set12/01.png")
         image = np.array(image).astype(np.int64)
 
-        plots = [image]
+        # plots = [image]
+        plots = []
 
         def resize(image, size):
             N, N = image.shape
@@ -898,14 +980,14 @@ class Matrix(unittest.TestCase):
 
         resized = skimage.transform.resize(image, (N, N))
         rescaled = rescale(resized, L)
-        plots.append(rescaled)
-
-        # # resized = resize(image, N)
-        # # rescaled = rescale(resized, L)
-
-        # print(len(np.unique(rescaled)))
-
         # plots.append(rescaled)
+
+        resized = resize(image, N)
+        rescaled = rescale(resized, L)
+
+        print(len(np.unique(rescaled)))
+
+        plots.append(rescaled)
 
         print(f"L = {np.max(rescaled)}")
         print(f"Theoretical beta2: {theoretical_beta2(N, M[0], N*np.max(rescaled)):.2e}")
@@ -987,7 +1069,7 @@ class Misc(unittest.TestCase):
         print(r"\end{tikzpicture}")
 
         
-    def draw_subgroup_lattice_2D(self, M=4, N=6, color=True, cyclic=True):
+    def draw_subgroup_lattice_2D(self, M=2, N=10, color=False, cyclic=True):
 
         assert cyclic
 
@@ -1005,7 +1087,6 @@ class Misc(unittest.TestCase):
 
             subgroups.append((subgroup, generating_set))
 
-        # print(subgroups)
         n_sets = len(subgroups)
         
         trivial = frozenset({(0, 0)})
@@ -1018,20 +1099,16 @@ class Misc(unittest.TestCase):
         level = 0
         while remaining:
             levels[level + 1] = set()
-            # print(levels)
             print(f"Level: {level}; remaining: {remaining}")
             for subgroup_ind in remaining:
                 subgroup, generating_set = subgroups[subgroup_ind]
                 for subsubgroup_ind in levels[level]:
                     subsubgroup, _ = subgroups[subsubgroup_ind]
                     print(subsubgroup, subsubgroup <= subgroup)
-                    # if subsubgroup <= subgroup and all(not (subgroup >= subgroups[ind][0]) for ind in remaining - {subgroup_ind, subsubgroup_ind}):
                     if subsubgroup <= subgroup and all(not (subgroup >= subgroups[ind][0] >= subsubgroup) for ind in remaining - {subgroup_ind}):
                         levels[level + 1].add(subgroup_ind)
                         connections.add((subgroup_ind, subsubgroup_ind))
             level += 1
-            # for subgroup_ind in levels[level]:
-            #     remaining.remove(subgroup_ind)
             remaining -= levels[level]
         
         print()
@@ -1053,7 +1130,7 @@ class Misc(unittest.TestCase):
                 else:
                     y = 2 * level
                 i += 1
-                print(f"{subgroup_ind}/{x}/{y}/{set(generating_set)}", end='%\n' if i == len(levels[level]) and level == len(levels) - 1 else ',\n')
+                print(f"{subgroup_ind}/{x}/{y}/{set(list(generating_set))}", end='%\n' if i == len(levels[level]) and level == len(levels) - 1 else ',\n')
         print(r"} { \node (\n) at (\x,\y) {\set\group}; }")
 
         colors = ["red", "green", "blue", "cyan", "magenta", "yellow"]
@@ -1072,3 +1149,29 @@ class Misc(unittest.TestCase):
         
         print(r"\end{tikzpicture}")
         
+
+    def search_space(self, M = 30, N = 30, L = 1):
+        
+        all_coeff_classes = binvert.get_coeff_classes_2D(M, N, False)
+        n_coeffs = sum(map(len, all_coeff_classes.values()))
+        print(f"Number of coefficient classes: {n_coeffs}")
+
+        total_size = 0
+
+        for D1, D2 in product(sp.divisors(M), sp.divisors(N)):
+
+            D = np.lcm(D1, D2)
+            D_red = reduced(D)
+
+            L1 = L * M * N // D
+
+            pow = D_red - 2
+            if pow > 0:
+                subproblem_size = (L1 + 1) ** pow
+                total_size += subproblem_size * len(all_coeff_classes[D1, D2])
+                print(D1, D2, D, subproblem_size, len(all_coeff_classes[D1, D2]))
+                
+        print(f"Total search space size: {total_size:.2e}")
+
+        pow = (M * N - 2 * n_coeffs + 2 + (M * N) % 2)
+        print(f"Brute force search space size: 2^{pow} = {(L + 1) ** pow:.2e}")
