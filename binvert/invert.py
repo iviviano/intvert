@@ -228,7 +228,8 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 description:
 This dynamic programming implementation of 2D inversion iterates through pairs of divisors of `N1, N2 = signal.shape`, with several 1D inversions occuring at each iteration.
 """
-@np.vectorize(signature="(M,N)->(M,N)", excluded=set(range(1, len(_lll_params) + 1)) | {"known_coeffs"} | _lll_params)	
+# @np.vectorize(signature="(M,N)->(M,N)", excluded=set(range(1, len(_lll_params) + 1)) | {"known_coeffs"} | _lll_params)	
+@my_vectorize(signature="(M,N)->(M,N)", excluded=set(range(1, len(_lll_params) + 1)) | {"known_coeffs"} | _lll_params)	
 def invert_2D(signal, known_coeffs={}, **lattice_params):
 
 	M, N = signal.shape
