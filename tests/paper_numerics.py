@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 import gmpy2 as mp
 import sympy as sp
 import sys
@@ -27,7 +28,7 @@ def theoretical_beta2(N, M, upper_int, beta0=.1, K=None,):
 
     first_term = vol(N_reduced) * (K ** 2 + beta0 ** 2) ** ((N_reduced + M) / 2) * ((N_reduced + 1) * vol(N_reduced) / (2 * N_reduced * vol(N_reduced - 1)))
     second_term = vol(N_reduced) * K ** (N_reduced + M) * sum(1 / np.arange(1, max(1, np.floor(((K / beta0) ** 2 + 1) ** .5))) ** M)
-    return (first_term + second_term) ** (1 / (2 * M))
+    return float(first_term + second_term) ** (1 / (2 * M))
 
 def gmean(x, y):
     return (x * y) ** .5
@@ -66,6 +67,7 @@ def shallow_select_coeffs(N, M = 1):
     return binvert.select_coeffs_1D(N, Ls)
 
 def reduced(N):
+    return sp.totient(N)
     prime_factors = sp.primefactors(N)
     return int(np.round(N * np.prod(1 - 1 / np.array(prime_factors))))
 
@@ -91,24 +93,18 @@ class LatticeTheory(unittest.TestCase):
             blurred_signals = binvert.sample_1D(signals, selected_coeffs)
             Ks = np.linalg.norm(blurred_signals.astype(float) - signals, axis=1)
 
-            hist, bin_edges = np.histogram(Ks, bins=30, density=True)
-            x = (bin_edges[:-1] + bin_edges[1:]) / 2
+            kde = scipy.stats.gaussian_kde(Ks)
+            x = np.linspace(min(Ks), max(Ks), 1000)
+
+            hist = kde(x)
+
             ax[M - 1].plot(x, hist)
             ax[-1].plot(x, hist, label=f"$M = {M}$")
 
-            # ax[M - 1].hist(Ks, bins='fd', label=f"M={M}", density=True)
-
-            def height(val):
-                xl, xr = x[x < val][-1], x[x > val][0]
-                yl, yr = hist[x < val][-1], hist[x > val][0]
-                slope = (yr - yl) / (xr - xl)
-                return yl + slope * (val - xl) - 1e-3
-
-
-            theory = .5 * np.sqrt((reduced(N) - 2 * M) * upper_int)
-            ax[M - 1].vlines(theory, 0, height(theory), color='red', label="Theoretical $K$", linestyle='dashed')
+            theory = .5 * np.sqrt((int(reduced(N)) - 2 * M) * upper_int)
+            ax[M - 1].vlines(theory, 0, kde(theory), color='red', label="Theoretical $K$", linestyle='dashed')
             mc = np.mean(Ks)
-            ax[M - 1].vlines(mc, 0, height(mc), color='blue', label="Average", linestyle='dashed')
+            ax[M - 1].vlines(mc, 0, kde(mc), color='blue', label="Average", linestyle='dashed')
 
             low = min(low, min(Ks))
             high = max(high, max(Ks))
@@ -125,44 +121,62 @@ class LatticeTheory(unittest.TestCase):
         save_fig(f"K_hist_N={N}")
         plt.show()
 
-    def test_N_M(self):
+    def test_M_N(self):
 
-        Ns = np.arange(19, 61)
-        Ms = np.arange(1, 4)
 
-        fig, ax = plt.subplots(1, 2)
-        fig.set_size_inches(12, 5)
+        fig, ax = plt.subplots(2, 2)
+        fig.set_size_inches(12, 9)
 
-        ca = ax[0]
+        for i, L in enumerate([1, None]):
 
-        for M in Ms:
-            beta2s = []
-            for N in Ns:
-                beta2s.append(theoretical_beta2(N, M, N))
-            ca.plot(Ns, beta2s, label=f"$M = {M}$")
-            ca.set_ylabel(r"$\beta_2$")
-            ca.set_xlabel(r"$N$")
-            ca.set_yscale('log')
+            Ns = np.arange(19, 61)
+            Ms = np.arange(1, 4)
 
-            ca.legend()
+            ca = ax[i, 1]
 
-        Ns = np.arange(29, 35)
-        ca = ax[1]
-        for i, N in enumerate(Ns):
-            betas = []
-            Ms = np.arange(1, (reduced(N)) // 2)
             for M in Ms:
-                betas.append(theoretical_beta2(N, M, N))
-            ca.plot(Ms, betas, label=f"$N = {N}$")
+                beta2s = []
+                for N in Ns:
+                    L = L if L else N
+                    beta2s.append(theoretical_beta2(N, M, L))
+                ca.plot(Ns, beta2s, label=f"$M = {M}$")
+                ca.set_ylabel(r"$\beta_2$")
+                ca.set_xlabel(r"$N$")
+                ca.set_yscale('log')
 
-            ca.set_title(f"$N = {N}$")
-            ca.set_xlabel(f"$M$")
-            ca.set_ylabel(r"$\beta_2$")
-            ca.set_yscale('log')
+                ca.legend()
 
-            ca.legend()
+            Ns = np.arange(29, 35)
+            ca = ax[i, 0]
+            for i, N in enumerate(Ns):
+                L = L if L else N
+                betas = []
+                Ms = np.arange(1, (reduced(N)) // 2)
+                for M in Ms:
+                    betas.append(theoretical_beta2(N, M, L))
+                ca.plot(Ms, betas, label=f"$N = {N}$")
 
-        save_fig("N_M_dep")
+                ca.set_xlabel(f"$M$")
+                ca.set_ylabel(r"$\beta_2$")
+                ca.set_yscale('log')
+
+                ca.legend()
+
+        plt.subplots_adjust(hspace=0.2, wspace=0.2)
+        save_fig("M_N_dep")
+        plt.show()
+
+    def test_phi(self):
+
+        N = np.arange(19, 61)
+
+        phi = np.vectorize(sp.totient)(N)
+
+        plt.xlabel(r"$N$")
+        plt.ylabel(r"$\phi(N)$")
+
+        plt.plot(N, phi)
+        save_fig("phi")
         plt.show()
 
     
@@ -883,7 +897,7 @@ class Matrix(unittest.TestCase):
 
     def test_all_rect(self):
 
-        Ns = [(4, 6), (8, 10), (9, 11), (11, 13), (12, 18), (9, 21), (30, 40), (36, 45)]
+        Ns = [(4, 6), (8, 10), (9, 11), (11, 13), (12, 18), (9, 21), (30, 40), (36, 45), (29, 29), (31, 31), (37, 37), (41, 41), (49, 49), (60, 60), (23, 23)]
         last = np.load("../data/rect_last.npy")
 
         for i in range(last + 1, len(Ns)):
@@ -963,8 +977,8 @@ class Matrix(unittest.TestCase):
         image = Image.open("../Set12/01.png")
         image = np.array(image).astype(np.int64)
 
-        # plots = [image]
-        plots = []
+        plots = [image]
+        # plots = []
 
         def resize(image, size):
             N, N = image.shape
@@ -1015,12 +1029,25 @@ class Matrix(unittest.TestCase):
         else:
             print("did not check if this setup was solvable")
 
-        fig, ax = plt.subplots(1, len(plots))
+        fig, ax = plt.subplots(2, len(plots))
         fig.set_size_inches(12, 5)
         for i in range(len(plots)):
-            ax[i].matshow(-plots[i], cmap='binary')
-            ax[i].set_xticks([])
-            ax[i].set_yticks([])
+            ax[0, i].matshow(-plots[i], cmap='binary')
+            ax[0, i].set_xticks([])
+            ax[0, i].set_yticks([])
+        ax[0, 0].set_title("Original image")
+        ax[0, 1].set_title("Rescaled image")
+        ax[0, 2].set_title("Sampled image")
+
+        ax[1, 0].set_title("Value distribution")
+        kde = scipy.stats.gaussian_kde(image.flatten())
+        x = np.linspace(np.min(image), np.max(image), 1000)
+        ax[1, 0].plot(x, kde(x))
+
+        ax[1, 1].set_title("Value distribution")
+        kde = scipy.stats.gaussian_kde(rescaled.flatten())
+        x = np.linspace(np.min(rescaled), np.max(rescaled), 1000)
+        ax[1, 1].plot(x, kde(x))
         
         plt.show()
 
@@ -1069,7 +1096,7 @@ class Misc(unittest.TestCase):
         print(r"\end{tikzpicture}")
 
         
-    def draw_subgroup_lattice_2D(self, M=2, N=10, color=False, cyclic=True):
+    def draw_subgroup_lattice_2D(self, M=4, N=6, color=True, cyclic=True):
 
         assert cyclic
 
@@ -1099,12 +1126,12 @@ class Misc(unittest.TestCase):
         level = 0
         while remaining:
             levels[level + 1] = set()
-            print(f"Level: {level}; remaining: {remaining}")
+            # print(f"Level: {level}; remaining: {remaining}")
             for subgroup_ind in remaining:
                 subgroup, generating_set = subgroups[subgroup_ind]
                 for subsubgroup_ind in levels[level]:
                     subsubgroup, _ = subgroups[subsubgroup_ind]
-                    print(subsubgroup, subsubgroup <= subgroup)
+                    # print(subsubgroup, subsubgroup <= subgroup)
                     if subsubgroup <= subgroup and all(not (subgroup >= subgroups[ind][0] >= subsubgroup) for ind in remaining - {subgroup_ind}):
                         levels[level + 1].add(subgroup_ind)
                         connections.add((subgroup_ind, subsubgroup_ind))
@@ -1115,11 +1142,12 @@ class Misc(unittest.TestCase):
         print(r"\begin{tikzpicture}")
 
         print(r"\foreach \n/\x/\y/\group in {")
+        # print(r"\foreach \n/\x/\y/\group/\div1/\div2 in {")
         for level in range(len(levels)):
             print(f"% level {level}")
             count = len(levels[level]) - 1
             scale = 1.5 * max(map(lambda index: len(subgroups[index][1]), levels[level]))
-            # print(f"width: {width}")
+            # scale = 2 * max(map(lambda index: len(subgroups[index][1]), levels[level]))
             i = 0
             for subgroup_ind in levels[level]:
                 subgroup, generating_set = subgroups[subgroup_ind]
@@ -1130,8 +1158,11 @@ class Misc(unittest.TestCase):
                 else:
                     y = 2 * level
                 i += 1
-                print(f"{subgroup_ind}/{x}/{y}/{set(list(generating_set))}", end='%\n' if i == len(levels[level]) and level == len(levels) - 1 else ',\n')
+                k, l = list(generating_set)[0]
+                print(f"{subgroup_ind}/{x}/{y}/{set(sorted(list(generating_set)))}", end='%\n' if i == len(levels[level]) and level == len(levels) - 1 else ',\n')
+                # print(f"{subgroup_ind}/{x}/{y}/{set(sorted(list(generating_set)))}/{M//np.gcd(M,k)},{N//np.gcd(N,l)}", end='%\n' if i == len(levels[level]) and level == len(levels) - 1 else ',\n')
         print(r"} { \node (\n) at (\x,\y) {\set\group}; }")
+        # print(r"} { \node (\n) at (\x,\y) {(\div1,\div2)~,~\set\group}; }")
 
         colors = ["red", "green", "blue", "cyan", "magenta", "yellow"]
         divisors = sp.divisors(M)
@@ -1150,13 +1181,13 @@ class Misc(unittest.TestCase):
         print(r"\end{tikzpicture}")
         
 
-    def search_space(self, M = 30, N = 30, L = 1):
+    def search_space(self, M = 30, N = 1, L = 1):
         
         all_coeff_classes = binvert.get_coeff_classes_2D(M, N, False)
         n_coeffs = sum(map(len, all_coeff_classes.values()))
         print(f"Number of coefficient classes: {n_coeffs}")
 
-        total_size = 0
+        total_size = 0.0
 
         for D1, D2 in product(sp.divisors(M), sp.divisors(N)):
 

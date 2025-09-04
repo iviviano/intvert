@@ -51,7 +51,7 @@ def _setup_and_solve(dft, inverted, known_coeffs, factors, use_guess=True, beta0
 	
 	precision = mp.get_context().precision
 	if epsilon is None:
-		epsilon = 10 ** (-.3 * precision + 2.7 + .1 * N)
+		epsilon = 10 ** max(-.3 * precision + 2.7 + .1 * N, -10)
 	def check(vector):
 		if len(vector) == N or vector[N] == beta0:
 			return np.allclose(basis_matrix[N + 1:] @ np.concatenate([mp_round(vector[:N] + signal), [1]]), 0, atol=epsilon)
@@ -152,6 +152,62 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 	Notes
 	-----
 	This dynamic programming implementation of 1D inversion iterates through the divisors :math:`d` of the signal size `N = len(signal)`. Each iteration requires solving a linear integer program in :math:`d` variables. The integer program is reduced to the shortest vector problem by constructing the lattice, a lattice basis, with reduction parameters :math:`\beta_0,\beta_1,\beta_2`. This shortest vector problem is solved with the LLL approximation algorithm using the given value of :math:`\delta`. The vector returned by LLL is rejected if the known part of its DFT does not match `signal` to absolute tolerance `epsilon`, causing an `InversionError`.
+
+	Examples
+	--------
+
+	Sampling and inverting with automatically selected coefficients:
+
+	>>> signal = np.array([1, 1, 0, 1, 0, 1, 0])
+	>>> sampled = binvert.sample_1D(signal)
+	>>> np.allclose(signal, binvert.invert_1D(sampled))
+	True
+
+	Sampling and inverting with user-selected coefficients:
+
+	>>> known_coeffs = {7: {0}, 1: {2}}
+	>>> sampled = binvert.sample_1D(signal, known_coeffs)
+	>>> np.allclose(signal, binvert.invert_1D(sampled, known_coeffs))
+	True
+	
+	Sampling with user selectioin and inverting with automatically selected coefficients:
+
+	>>> np.allclose(signal, binvert.invert_1D(sampled))
+	True
+	
+	Inverting a larger example:
+
+	>>> signal = np.random.randint(0, 2, 30)
+	>>> signal
+	array([1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 
+		0, 1, 1, 0, 1, 0, 0, 0]) # random
+	>>> sampled = binvert.sample_1D(signal)
+	>>> np.allclose(signal, binvert.invert_1D(sampled))
+	True
+
+	With insufficient precision, inversion may fail:
+
+	>>> signal = np.arange(29)
+	>>> sampled = binvert.sample_1D(signal)
+	>>> np.allclose(signal, binvert.invert_1D(sampled))
+	False
+
+	In this case, increasing precision and beta2 allows inversion:
+
+	>>> with gmpy2.get_context() as c:
+	...     c.precision = 100
+	...     sampled = binvert.sample_1D(signal)
+	...     np.allclose(signal, binvert.invert_1D(sampled, beta2=1e20))
+	... 
+	True
+
+	Or providing more DFT coefficients also allows inversion:
+
+	>>> known_coeffs = binvert.select_coeffs_1D(29, 2)
+	>>> sampled = binvert.sample_1D(signal, known_coeffs)
+	>>> np.allclose(signal, binvert.invert_1D(sampled, known_coeffs))
+	True
+
 	"""
 
 	N = len(signal)
