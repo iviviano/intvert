@@ -4,13 +4,16 @@ import sympy as sp
 from itertools import product, chain
 from functools import wraps
 
-def my_vectorize(func, **kwargs):
-    @wraps(func)
-    @np.vectorize(**kwargs)
-    def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
+def my_vectorize(**kwargs):
+    def helper(func):
+        @wraps(func)
+        @np.vectorize(**kwargs)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
+
+    return helper
 
 @np.vectorize(signature="(n)->(n)")
 def mp_dft(signal):
