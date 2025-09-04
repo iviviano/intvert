@@ -109,7 +109,7 @@ class InversionError(Exception):
 		 + f"\tepsilon:   {self.epsilon:.2e}"
 		)
 		
-
+@set_module("binvert")
 @my_vectorize(signature="(N)->(N)", excluded=set(range(1, len(_lll_params) + 1)) | {"known_coeffs"} | _lll_params)	
 def invert_1D(signal, known_coeffs={}, **lattice_params):
 	"""Invert an integer signal from limited DFT spectrum.

@@ -3,11 +3,13 @@ import gmpy2 as mp
 import sympy as sp
 from itertools import product, chain
 from functools import wraps
+from decorator import set_module
 
 def my_vectorize(**kwargs):
     def helper(func):
         @wraps(func)
         @np.vectorize(**kwargs)
+        @set_module("binvert")
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
 
@@ -82,6 +84,7 @@ def mp_dft2(signal):
     intermediate = [mp_dft(row) for row in signal]
     return np.transpose([mp_dft(row) for row in np.transpose(intermediate)])
 
+@set_module("binvert")
 def mp_idft(signal):
     """Compute the 1D inverse discrete Fourier transform of a signal.
 
@@ -117,6 +120,7 @@ def mp_idft(signal):
 
     return np.conj(mp_dft(np.conj(signal))) / signal.shape[-1]
 
+@set_module("binvert")
 def mp_idft2(signal): 
     
     return np.conj(mp_dft2(np.conj(signal))) / np.prod(signal.shape[-2:])
@@ -144,6 +148,7 @@ def _to_1D(coeff_classes_2D):
     return {divisor: {k for k, _ in coeff_classes_2D[divisor, 1].pop()} for   divisor, _ in coeff_classes_2D}
 
  
+@set_module("binvert")
 def get_coeff_classes_1D(N, include_conjugates=True):
     """Returns a dictionary of classes of DFT coefficient frequencies for a 1D integer signal.
 
@@ -177,6 +182,7 @@ def get_coeff_classes_1D(N, include_conjugates=True):
     return _to_1D(get_coeff_classes_2D(N, 1, include_conjugates=include_conjugates))
     
  
+@set_module("binvert")
 def get_coeff_classes_2D(M, N, include_conjugates=True):
     found = np.zeros((M, N), dtype=bool)
 
@@ -215,6 +221,8 @@ def _get_lattice_level(k, l, M, N=1): # levels indexed 1, 2, ... starting at top
 
 
     # Constructs a dictionary mapping divisors of `N` to sets of equivalent DFT coefficient frequencies for an integer signal of length `N`. The divisor d is mapped to a set of DFT frequencies containing integers between 0 and `N` - 1 whose greatest common divisor with `N` is d. The number of frequencies in this set is determined by `Ls`. If `Ls` is an integer, the number of frequencies in `selected[1]` is `Ls`, and each other set of frequencies has one element. If `Ls` is a list, `Ls[i]` is the number of frequencies in `selected[d]` if `d` generates a cyclic subgroup at the `i`'th level of the subgroup lattice of :math:`\mathbb{Z}_N`. If `Ls[i]` is larger than the number of generators of `selected[d]` which are between `0` and `N / 2`, `selected[d]` is just this maximal set of such generators.
+
+@set_module("binvert")
 def select_coeffs_1D(N, Ls=[]):
     """Selects a set of DFT coefficient frequencies.
 
@@ -253,6 +261,7 @@ def select_coeffs_1D(N, Ls=[]):
     return _to_1D(select_coeffs_2D(N, 1, Ls))
 
 
+@set_module("binvert")
 def select_coeffs_2D(M, N, Ls = []):
     """Selects a set of DFT coefficient frequencies.
 
