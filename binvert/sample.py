@@ -2,6 +2,15 @@ import numpy as np
 import gmpy2 as mp
 import sympy as sp
 from itertools import product, chain
+from functools import wraps
+
+def my_vectorize(func, **kwargs):
+    @wraps(func)
+    @np.vectorize(**kwargs)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapper
 
 @np.vectorize(signature="(n)->(n)")
 def mp_dft(signal):
