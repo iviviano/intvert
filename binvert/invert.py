@@ -110,6 +110,7 @@ class InversionError(Exception):
 		)
 		
 
+@my_vectorize(signature="(N)->(N)", excluded=set(range(1, len(_lll_params) + 1)) | {"known_coeffs"} | _lll_params)	
 def invert_1D(signal, known_coeffs={}, **lattice_params):
 	"""Invert an integer signal from limited DFT spectrum.
 
@@ -209,21 +210,19 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 
 	"""
 
-	@np.vectorize(signature="(N)->(N)", excluded=set(range(1, len(_lll_params) + 1)) | {"known_coeffs"} | _lll_params)	
-	def unit(signal, known_coeffs, lattice_params):
-		N = len(signal)
-		dft = mp_dft(signal)
-		inverted = {1: mp_real(dft[:1])}
-		for d in sp.divisors(N)[1:]:
+	N = len(signal)
+	dft = mp_dft(signal)
+	inverted = {1: mp_real(dft[:1])}
+	for d in sp.divisors(N)[1:]:
 
-			current_coeffs = [k * d // N for k in known_coeffs[N // d]] if d in known_coeffs else []
-			factors = sp.primefactors(d)
+		current_coeffs = [k * d // N for k in known_coeffs[N // d]] if d in known_coeffs else []
+		factors = sp.primefactors(d)
 
-			inverted[d] = _setup_and_solve(dft[:N:N // d], inverted=inverted, known_coeffs=current_coeffs, factors=factors, **lattice_params)
+		inverted[d] = _setup_and_solve(dft[:N:N // d], inverted=inverted, known_coeffs=current_coeffs, factors=factors, **lattice_params)
 
-		return inverted[N].astype(int)
+	return inverted[N].astype(int)
 	
-	return unit(signal, known_coeffs, lattice_params)
+	
 """
 description:
 This dynamic programming implementation of 2D inversion iterates through pairs of divisors of `N1, N2 = signal.shape`, with several 1D inversions occuring at each iteration.

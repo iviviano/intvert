@@ -15,7 +15,8 @@ def my_vectorize(**kwargs):
 
     return helper
 
-@np.vectorize(signature="(n)->(n)")
+# @np.vectorize(signature="(n)->(n)")
+@my_vectorize(signature="(n)->(n)")
 def mp_dft(signal):
     """Compute the 1D discrete Fourier transform of a signal.
 
@@ -51,7 +52,7 @@ def mp_dft(signal):
     # return np.vander(root ** np.arange(N), N, increasing = True) @ signal
     return np.array([[mp.root_of_unity(N, (N - 1) * n * k % N) for k in range(N)] for n in range(N)]) @ signal
 
-@np.vectorize(signature="(m,n)->(m,n)")
+@my_vectorize(signature="(m,n)->(m,n)")
 def mp_dft2(signal):
     """Compute the 2D discrete Fourier transform of a signal.
 
@@ -316,7 +317,7 @@ def select_coeffs_2D(M, N, Ls = []):
 
     return all_selected_coeffs
 
-@np.vectorize(signature="(N)->(N)", excluded={1, "known_coeffs"})
+@my_vectorize(signature="(N)->(N)", excluded={1, "known_coeffs"})
 def sample_1D(signal, known_coeffs=None):
     """Sample DFT coefficients of a 1D integer signal.
 
@@ -350,7 +351,7 @@ def sample_1D(signal, known_coeffs=None):
     dft[~mask] = 0
     return mp_real(mp_idft(dft))
 
-@np.vectorize(signature="(M,N)->(M,N)", excluded={1, "known_coeffs"})
+@my_vectorize(signature="(M,N)->(M,N)", excluded={1, "known_coeffs"})
 def sample_2D(signal, known_coeffs={}):
 
     M, N = signal.shape
