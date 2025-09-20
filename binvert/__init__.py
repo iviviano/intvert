@@ -20,6 +20,7 @@ from .sample import (
 from .invert import (
 	invert_1D,
 	invert_2D,
+	InversionError,
 )
 
 __all__ = ["sample_1D", "sample_2D", "invert_1D", "invert_2D"]
