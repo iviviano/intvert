@@ -2,7 +2,7 @@
 intvert
 =======
 
-intvert is a pure Python package for inversion of 1D and 2D integer arrays from partial DFT samples. This package contains the codebase for the paper [LV]_. 
+intvert is a pure Python package for inversion of 1D and 2D integer arrays from partial DFT samples. This package contains the codebase for the paper [LV]_. See the full documentation `here <https://intvert.readthedocs.io/en/latest/index.html>`_.
 
 Examples
 --------

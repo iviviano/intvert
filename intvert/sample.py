@@ -169,6 +169,7 @@ def mp_idft2(signal):
         The 2D inverse DFT of `signal` along the last two axes.
 
     See also
+    --------
     mp_dft2 : inverse of `mp_idft2`
     mp_idft : analogous 1D function
 
@@ -368,7 +369,7 @@ def select_coeffs_1D(N, Ls=[]):
     Examples
     --------
     By default, get 1 element of each coefficient class
-    
+
     >>> intvert.select_coeffs_1D(10)
     {10: {0}, 1: {1}, 2: {2}, 5: {5}} 
 
