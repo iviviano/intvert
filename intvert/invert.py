@@ -109,16 +109,16 @@ class InversionError(Exception):
 		 + f"\tepsilon:   {self.epsilon:.2e}"
 		)
 		
-# @set_module("binvert")
+# @set_module("intvert")
 @my_vectorize(signature="(N)->(N)", excluded=set(range(1, len(_lll_params) + 1)) | {"known_coeffs"} | _lll_params)	
 def invert_1D(signal, known_coeffs={}, **lattice_params):
-	"""Invert an integer signal from limited DFT spectrum.
+	r"""Invert an integer signal from limited DFT spectrum.
 
 	Invert the last axis of an integer signal from a limited set of sampled DFT coefficients. The sampled frequencies may be provided in `known_coeffs`, which should be structured like the output of `select_coeffs_1D`. The input `signal` should be given in real space, so the known DFT coefficients are obtained from `mp_dft(signal)`. If no known frequencies are provided, they are chosen automatically from `signal` by assuming nonzero DFT coefficients are known. It is assumed that a sufficient set of coefficients are known to guarantee uniqueness of inversion. 
 
 	Parameters
 	----------
-	signal : mpc ndarray
+	signal : mpfr ndarray
 		Sampled signal.
 	known_coeffs : dict, optional
 		Dictionary of known frequencies, by default {}
@@ -133,7 +133,7 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 	InversionError
 		If inversion fails for any subproblem. The current lattice parameter values are given, so they may be tuned to allow inversion.
 
-	Other Parameters
+	Lattice Parameters
 	------------------
 	These parameters are passed as keyword arguments through `**lattice_params`. They control the lattice-based integer programming solver.
 	beta0 : float
@@ -149,9 +149,23 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 	epsilon : float
 		Absolute tolerance for verifying shortest vectors against DFT coefficient data.
 
+	See also
+	--------
+	sample_1D : constructing the sampled input
+	select_coeffs_1D : selecting a partial set of known DFT coefficients
+	invert_2D : analogous 2D function
+
 	Notes
 	-----
-	This dynamic programming implementation of 1D inversion iterates through the divisors :math:`d` of the signal size `N = len(signal)`. Each iteration requires solving a linear integer program in :math:`d` variables. The integer program is reduced to the shortest vector problem by constructing the lattice, a lattice basis, with reduction parameters :math:`\beta_0,\beta_1,\beta_2`. This shortest vector problem is solved with the LLL approximation algorithm using the given value of :math:`\delta`. The vector returned by LLL is rejected if the known part of its DFT does not match `signal` to absolute tolerance `epsilon`, causing an `InversionError`.
+	This dynamic programming implementation of 1D inversion iterates through the divisors :math:`d` of the signal size `N = len(signal)`. Each iteration requires solving an integer linear program in :math:`d` variables. The integer program is reduced to the shortest vector problem by constructing a lattice basis with reduction parameters :math:`\beta_0,\beta_1,\beta_2` [LV]_. This shortest vector problem is solved with the LLL approximation algorithm [LLL]_ using the given value of :math:`\delta`. The vector returned by LLL is rejected if the known part of its DFT does not match `signal` to absolute tolerance `epsilon`, causing an `InversionError`.
+
+
+	References
+	----------
+	.. [LLL] Lenstra, A.K., Lenstra, H.W. & Lovász, L. Factoring polynomials with rational coefficients. Math. Ann. 261, 515–534 (1982). https://doi.org/10.1007/BF01457454
+
+	.. [LV] TODO
+
 
 	Examples
 	--------
@@ -159,20 +173,20 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 	Sampling and inverting with automatically selected coefficients:
 
 	>>> signal = np.array([1, 1, 0, 1, 0, 1, 0])
-	>>> sampled = binvert.sample_1D(signal)
-	>>> np.allclose(signal, binvert.invert_1D(sampled))
+	>>> sampled = intvert.sample_1D(signal)
+	>>> np.allclose(signal, intvert.invert_1D(sampled))
 	True
 
 	Sampling and inverting with user-selected coefficients:
 
 	>>> known_coeffs = {7: {0}, 1: {2}}
-	>>> sampled = binvert.sample_1D(signal, known_coeffs)
-	>>> np.allclose(signal, binvert.invert_1D(sampled, known_coeffs))
+	>>> sampled = intvert.sample_1D(signal, known_coeffs)
+	>>> np.allclose(signal, intvert.invert_1D(sampled, known_coeffs))
 	True
 	
 	Sampling with user selection and inverting with automatically selected coefficients:
 
-	>>> np.allclose(signal, binvert.invert_1D(sampled))
+	>>> np.allclose(signal, intvert.invert_1D(sampled))
 	True
 	
 	Inverting a larger example:
@@ -181,31 +195,31 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 	>>> signal
 	array([1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 
 		0, 1, 1, 0, 1, 0, 0, 0]) # random
-	>>> sampled = binvert.sample_1D(signal)
-	>>> np.allclose(signal, binvert.invert_1D(sampled))
+	>>> sampled = intvert.sample_1D(signal)
+	>>> np.allclose(signal, intvert.invert_1D(sampled))
 	True
 
-	With insufficient precision, inversion may fail:
+	With insufficient precision, inversion may fail for long signals with large integers:
 
 	>>> signal = np.arange(29)
-	>>> sampled = binvert.sample_1D(signal)
-	>>> np.allclose(signal, binvert.invert_1D(sampled))
+	>>> sampled = intvert.sample_1D(signal)
+	>>> np.allclose(signal, intvert.invert_1D(sampled))
 	False
 
 	In this case, increasing precision and beta2 allows inversion:
 
 	>>> with gmpy2.get_context() as c:
 	...     c.precision = 100
-	...     sampled = binvert.sample_1D(signal)
-	...     np.allclose(signal, binvert.invert_1D(sampled, beta2=1e20))
+	...     sampled = intvert.sample_1D(signal)
+	...     np.allclose(signal, intvert.invert_1D(sampled, beta2=1e20))
 	... 
 	True
 
 	Or providing more DFT coefficients also allows inversion:
 
-	>>> known_coeffs = binvert.select_coeffs_1D(29, 2)
-	>>> sampled = binvert.sample_1D(signal, known_coeffs)
-	>>> np.allclose(signal, binvert.invert_1D(sampled, known_coeffs))
+	>>> known_coeffs = intvert.select_coeffs_1D(29, 2)
+	>>> sampled = intvert.sample_1D(signal, known_coeffs)
+	>>> np.allclose(signal, intvert.invert_1D(sampled, known_coeffs))
 	True
 
 	"""
@@ -222,14 +236,103 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 
 	return inverted[N].astype(int)
 	
-	
-"""
-description:
-This dynamic programming implementation of 2D inversion iterates through pairs of divisors of `N1, N2 = signal.shape`, with several 1D inversions occuring at each iteration.
-"""
 # @np.vectorize(signature="(M,N)->(M,N)", excluded=set(range(1, len(_lll_params) + 1)) | {"known_coeffs"} | _lll_params)	
 @my_vectorize(signature="(M,N)->(M,N)", excluded=set(range(1, len(_lll_params) + 1)) | {"known_coeffs"} | _lll_params)	
 def invert_2D(signal, known_coeffs={}, **lattice_params):
+	r"""Invert an integer matrix from limited DFT spectrum.
+
+	Invert the last two axes of an integer signal from a limited set of sampled DFT coefficients. The sampled frequencies may be provided in `known_coeffs`, which should be structured like the output of `select_coeffs_2D`. The input `signal` should be given in real space, so the known DFT coefficients are obtained from `mp_dft2``(signal)`. If no known frequencies are provided, they are chosen automatically from `signal` by assuming nonzero DFT coefficients are known. It is assumed that a sufficient set of coefficients are known to guarantee uniqueness of inversion. 
+
+	Parameters
+	----------
+	signal : mpfr ndarray
+		Sampled 2D signal.
+	known_coeffs : dict, optional
+		Dictionary of known frequencies, by default {}
+
+ 
+	Returns
+	-------
+	int ndarray
+		Inverted signal.
+
+ 
+	Raises
+	------
+	InversionError
+		If inversion fails for any subproblem. The current lattice parameter values are given, so they may be tuned to allow inversion.
+
+
+	See also
+	--------
+	sample_2D : constructing the sampled input
+	select_coeffs_2D : selecting a partial set of known DFT coefficients
+	invert_1D : analogous 1D function
+
+ 
+	Notes
+	-----
+	Let :math:`(N_1, N_2)` be the shape of the last two axes of signal. This dynamic programming implementation of 2D inversion iterates through pairs of divisors of :math:`N_1, N_2`, with several 1D inversions occuring at each iteration. For details on 1D inversion and the keyword parameters `**lattice_params`, see `invert_1D`.
+
+
+	Examples
+	--------
+
+	Sampling and inverting with automatically selected coefficients:
+
+	>>> signal = np.arange(10).reshape((2, 5))
+	>>> sampled = intvert.sample_2D(signal)
+	>>> np.allclose(intvert.invert_2D(sampled), signal)
+	True
+
+	Sampling and inverting with user-selected coefficients:
+
+	>>> known_coeffs = {(2, 5): {frozenset({(0, 0)})}, (2, 1): {frozenset({(0, 4)})}, (1, 5): {frozenset({(1, 0)})}, (1, 1): {frozenset({(1, 4)})}}
+	>>> sampled = intvert.sample_2D(signal, known_coeffs)
+	>>> np.allclose(intvert.invert_2D(sampled, known_coeffs), signal)
+	True
+	
+	Sampling with user selection and inverting with automatically selected coefficients:
+
+	>>> np.allclose(intvert.invert_2D(sampled), signal)
+	True
+	
+	Inverting a larger example:
+
+	>>> np.random.seed(0)
+	>>> signal = np.random.randint(0, 2, (30, 20))
+	>>> sampled = intvert.sample_2D(signal)
+	>>> np.allclose(intvert.invert_2D(sampled), signal)
+	True
+
+	With insufficient precision, inversion may fail for long signals with large integers:
+
+	>>> signal = np.random.randint(0, 2, (29, 29))
+	>>> sampled = intvert.sample_2D(signal)
+	>>> try:
+	...		np.allclose(intvert.invert_2D(sampled), signal)
+	... except intvert.InversionError as err:
+	...		err
+	...
+	InversionError("Failure to recover a length 29 subproblem. It's possible that recovery was correct and the tolerance was too low. If you believer this is the case, try increasing epsilon. If recovery was incorrect, increasing precision and beta2 may aid in recovery.")
+
+	In this case, increasing precision and beta2 allows inversion:
+
+	>>> with gmpy2.get_context() as c:
+	...     c.precision = 100
+	...     sampled = intvert.sample_2D(signal)
+	...     np.allclose(intvert.invert_2D(sampled, beta2=1e16), signal)
+	... 
+	True
+
+	Or providing more DFT coefficients also allows inversion:
+
+	>>> known_coeffs = intvert.select_coeffs_2D(29, 29, 2)
+	>>> sampled = intvert.sample_2D(signal, known_coeffs)
+	>>> np.allclose(intvert.invert_2D(sampled, known_coeffs), signal)
+	True
+
+	"""
 
 	M, N = signal.shape
 	dft = mp_dft2(signal)
