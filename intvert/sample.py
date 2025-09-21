@@ -44,7 +44,7 @@ def mp_dft(signal):
 
     Notes
     -----
-    The algorithm used by this procedure depends on the current precision of the `gmpy2` context. If the current precision is at most double, the input is cast to numpy floats and the Fast Fourier transform is computed with the `numpy.fft.fft` procedure. If the precision of the current context is greater than 53 bits, the DFT is computed with standard matrix-vector multiplication.
+    The algorithm used by this procedure depends on the current precision of the `gmpy2` context. If the current precision is at most double, the input is cast to numpy floats and the Fast Fourier transform is computed with the :py:func:`numpy:numpy.fft.fft` procedure. If the precision of the current context is greater than 53 bits, the DFT is computed with standard matrix-vector multiplication.
 
     The DFT convention used in this implementation is
 
@@ -137,7 +137,7 @@ def mp_idft(signal):
     Examples
     --------
 
-    When more than 53 bits of precision are used, `mp_dft` and `mp_idft` yield higher numerical accuracy than `np.fft.fft` and `np.fft.ifft`:
+    When more than 53 bits of precision are used, `mp_dft` and `mp_idft` yield higher numerical accuracy than :py:func:`numpy:numpy.fft.fft` and :py:func:`numpy:numpy.fft.ifft`:
 
     >>> signal = np.arange(19)
     >>> max(abs(np.fft.ifft(np.fft.fft(signal)) - signal))
@@ -179,7 +179,7 @@ def mp_idft2(signal):
     Examples
     --------
 
-    When more than 53 bits of precision are used, `mp_dft2` and `mp_idft2` yield higher numerical accuracy than `np.fft.fft2` and `np.fft.ifft2`:
+    When more than 53 bits of precision are used, `mp_dft2` and `mp_idft2` yield higher numerical accuracy than :py:func:`numpy:numpy.fft.fft2` and :py:func:`numpy:numpy.fft.ifft2`:
 
     >>> signal = np.arange(30).reshape(5, 6)
     >>> np.max(abs(np.fft.ifft2(np.fft.fft2(signal)) - signal))
@@ -367,20 +367,21 @@ def select_coeffs_1D(N, Ls=[]):
 
     Examples
     --------
+    By default, get 1 element of each coefficient class
+    
     >>> intvert.select_coeffs_1D(10)
     {10: {0}, 1: {1}, 2: {2}, 5: {5}} 
 
-    By default, get 1 element of each coefficient class
+    If Ls is an integer, there are Ls generators in every class with with more than one generator between 0 and N / 2.
 
     >>> intvert.select_coeffs_1D(10, 2)
     {10: {0}, 1: {1, 3}, 2: {2, 4}, 5: {5}} 
 
-    If Ls is an integer, there are Ls generators in every class with with more than one generator between 0 and N / 2.
+    If Ls is a list of length 2, all classes on the top two levels of the lattice may have up to two generators. This is realized for d = 1 and d = 2. However, there is only one generator for the subgroup corresponding to d = 5.
 
     >>> intvert.select_coeffs_1D(10, [2]) 
     {10: {0}, 1: {1, 3}, 2: {2}, 5: {5}}
     
-    If Ls is a list of length 2, all classes on the top two levels of the lattice may have up to two generators. This is realized for d = 1 and d = 2. However, there is only one generator for the subgroup corresponding to d = 5.
     """ 
 
     return _to_1D(select_coeffs_2D(N, 1, Ls))

@@ -114,7 +114,7 @@ class InversionError(Exception):
 def invert_1D(signal, known_coeffs={}, **lattice_params):
 	r"""Invert an integer signal from limited DFT spectrum.
 
-	Invert the last axis of an integer signal from a limited set of sampled DFT coefficients. The sampled frequencies may be provided in `known_coeffs`, which should be structured like the output of `select_coeffs_1D`. The input `signal` should be given in real space, so the known DFT coefficients are obtained from `mp_dft(signal)`. If no known frequencies are provided, they are chosen automatically from `signal` by assuming nonzero DFT coefficients are known. It is assumed that a sufficient set of coefficients are known to guarantee uniqueness of inversion. 
+	Invert the last axis of an integer signal from a limited set of sampled DFT coefficients. The sampled frequencies may be provided in `known_coeffs`, which should be structured like the output of `select_coeffs_1D`. The input `signal` should be given in real space, so the known DFT coefficients are obtained by calling `mp_dft` on `signal`. If no known frequencies are provided, they are chosen automatically from `signal` by assuming nonzero DFT coefficients are known. It is assumed that a sufficient set of coefficients are known to guarantee uniqueness of inversion. 
 
 	Parameters
 	----------
@@ -133,9 +133,8 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 	InversionError
 		If inversion fails for any subproblem. The current lattice parameter values are given, so they may be tuned to allow inversion.
 
-	Lattice Parameters
-	------------------
-	These parameters are passed as keyword arguments through `**lattice_params`. They control the lattice-based integer programming solver.
+	Other Parameters
+	----------------
 	beta0 : float
 		Penalty for coefficient of last lattice basis column, by default 1e-1
 	beta1 : float
@@ -148,6 +147,9 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 		LLL approximation parameter delta, by default 0.9972
 	epsilon : float
 		Absolute tolerance for verifying shortest vectors against DFT coefficient data.
+
+	These parameters are passed as keyword arguments through `**lattice_params`. They control the lattice-based integer programming solver.
+
 
 	See also
 	--------
@@ -192,7 +194,7 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 	Inverting a larger example:
 
 	>>> signal = np.random.randint(0, 2, 30)
-	>>> signal
+	>>> signal # doctest: +SKIP
 	array([1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 
 		0, 1, 1, 0, 1, 0, 0, 0]) # random
 	>>> sampled = intvert.sample_1D(signal)
@@ -241,7 +243,7 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 def invert_2D(signal, known_coeffs={}, **lattice_params):
 	r"""Invert an integer matrix from limited DFT spectrum.
 
-	Invert the last two axes of an integer signal from a limited set of sampled DFT coefficients. The sampled frequencies may be provided in `known_coeffs`, which should be structured like the output of `select_coeffs_2D`. The input `signal` should be given in real space, so the known DFT coefficients are obtained from `mp_dft2``(signal)`. If no known frequencies are provided, they are chosen automatically from `signal` by assuming nonzero DFT coefficients are known. It is assumed that a sufficient set of coefficients are known to guarantee uniqueness of inversion. 
+	Invert the last two axes of an integer signal from a limited set of sampled DFT coefficients. The sampled frequencies may be provided in `known_coeffs`, which should be structured like the output of `select_coeffs_2D`. The input `signal` should be given in real space, so the known DFT coefficients are obtained by calling `mp_dft2` on `signal`. If no known frequencies are provided, they are chosen automatically from `signal` by assuming nonzero DFT coefficients are known. It is assumed that a sufficient set of coefficients are known to guarantee uniqueness of inversion. 
 
 	Parameters
 	----------

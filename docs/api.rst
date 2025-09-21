@@ -1,15 +1,11 @@
-My Project API Documentation
-============================
+API Reference
+=============
 
-TODO: project description
+The package is separated into three groups of procedures. The `Fourier Transforms <ft>` perform 1D and 2D discrete Fourier transforms (DFT's) with mixed precision floating point operations. The `Sampling <sample>` partition DFT frequencies and sample signals at partial sets of frequencies. The `Inversion <invert>` procedures invert sampled integer signals.
 
 .. currentmodule:: intvert
 
-.. toctree::
- 	:hidden:
- 	:glob:
-
- 	_autosummary_functions/*
+.. _ft::
 
 Fourier Transforms
 ------------------
@@ -22,6 +18,7 @@ Fourier Transforms
 	mp_dft2
 	mp_idft2
 
+.. _sample::
 Sampling
 --------
 
@@ -35,7 +32,7 @@ Sampling
 	sample_1D
 	sample_2D
 
-
+.. _invert::
 Inversion
 ---------
 
@@ -45,3 +42,8 @@ Inversion
 	invert_1D
 	invert_2D
 	InversionError
+
+
+Examples
+--------
+For examples, see the various functions.

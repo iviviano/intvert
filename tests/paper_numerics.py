@@ -11,7 +11,7 @@ from PIL import Image
 from itertools import product, chain
 from time import time
 
-from context import binvert
+from context import intvert
 
 import tracemalloc
 
@@ -77,7 +77,7 @@ def shallow_select_coeffs(N, M = 1):
     else:
         Ls = [M] + [N] * sum(prime_factors.values())
     
-    return binvert.select_coeffs_1D(N, Ls)
+    return intvert.select_coeffs_1D(N, Ls)
 
 def reduced(N):
     return sp.totient(N)
@@ -103,7 +103,7 @@ class LatticeTheory(unittest.TestCase):
         for M in Ms:
 
             selected_coeffs = shallow_select_coeffs(N, M)
-            blurred_signals = binvert.sample_1D(signals, selected_coeffs)
+            blurred_signals = intvert.sample_1D(signals, selected_coeffs)
             Ks = np.linalg.norm(blurred_signals.astype(float) - signals, axis=1)
 
             kde = scipy.stats.gaussian_kde(Ks)
@@ -305,7 +305,7 @@ class Lattice(unittest.TestCase):
 
                     selected_coeffs = shallow_select_coeffs(N, M)
                     print(selected_coeffs)
-                    blurred = binvert.sample_1D(signals, selected_coeffs)
+                    blurred = intvert.sample_1D(signals, selected_coeffs)
 
                     with self.subTest(M=M):
 
@@ -324,7 +324,7 @@ class Lattice(unittest.TestCase):
                                     n_correct[-1] += 1
                                     continue
                                 try:
-                                    inverted = binvert.invert_1D(blurred[n], selected_coeffs, beta2=beta2)
+                                    inverted = intvert.invert_1D(blurred[n], selected_coeffs, beta2=beta2)
                                     n_correct[-1] += np.allclose(signals[n] - inverted, 0)
                                     correct.add(n)
                                 except:
@@ -409,7 +409,7 @@ class Lattice(unittest.TestCase):
                     largest_failing = np.full(self.n_sig, 0, dtype=object)
 
                     known_coeffs = shallow_select_coeffs(N, M)
-                    blurred_signals = binvert.sample_1D(signals, known_coeffs)
+                    blurred_signals = intvert.sample_1D(signals, known_coeffs)
 
                     with self.subTest(N=N, M=M):
 
@@ -422,13 +422,13 @@ class Lattice(unittest.TestCase):
                                     correct += 1
                                     continue
                                 try:
-                                    inverted = binvert.invert_1D(blurred_signals[n], known_coeffs, beta2=beta2, epsilon=1e-10)
+                                    inverted = intvert.invert_1D(blurred_signals[n], known_coeffs, beta2=beta2, epsilon=1e-10)
                                     if np.allclose(inverted, signals[n]):
                                         correct += 1
                                         smallest_working[n] = beta2
                                     else:
                                         largest_failing[n] = beta2
-                                except binvert.InversionError:
+                                except intvert.InversionError:
                                     largest_failing[n] = beta2
                                 
                             return correct / self.n_sig
@@ -437,9 +437,9 @@ class Lattice(unittest.TestCase):
                             correct = 0
                             for n in range(self.n_sig):
                                 try:
-                                    inverted = binvert.invert_1D(blurred_signals[n], known_coeffs, beta2=beta2, epsilon=1e-10)
+                                    inverted = intvert.invert_1D(blurred_signals[n], known_coeffs, beta2=beta2, epsilon=1e-10)
                                     correct += np.allclose(inverted, signals[n])
-                                except binvert.InversionError:
+                                except intvert.InversionError:
                                     pass
                                 
                             return correct / self.n_sig
@@ -634,7 +634,7 @@ class Lattice(unittest.TestCase):
                     # blurred = blur.blur(matrices, l)
 
                     selected_coeffs = shallow_select_coeffs(N, M)
-                    blurred = binvert.sample_1D(signals, selected_coeffs)
+                    blurred = intvert.sample_1D(signals, selected_coeffs)
 
                     n_correct = 0
                     for n in range(self.n_sig):
@@ -642,7 +642,7 @@ class Lattice(unittest.TestCase):
 
                         try: 
                             beta2 = theoretical_beta2(N, M, upper_int, K=K)
-                            inverted = binvert.invert_1D(blurred[n], selected_coeffs, beta2=beta2)
+                            inverted = intvert.invert_1D(blurred[n], selected_coeffs, beta2=beta2)
                             n_correct += np.allclose(inverted - signals[n], 0)
                         except:
                             pass
@@ -718,13 +718,13 @@ class Lattice(unittest.TestCase):
                         c.precision = prec
 
                         known_coeffs = shallow_select_coeffs(N, M)
-                        blurred = binvert.sample_1D(signals, known_coeffs)
+                        blurred = intvert.sample_1D(signals, known_coeffs)
 
                         correct = 0
                         for n in range(self.n_sig):
 
                             try:
-                                inverted = binvert.invert_1D(blurred[n], known_coeffs, beta2=beta2[prec])
+                                inverted = intvert.invert_1D(blurred[n], known_coeffs, beta2=beta2[prec])
                                 correct += np.allclose(signals[n] - inverted, 0)
                             except Exception:
                                 pass
@@ -805,7 +805,7 @@ class Lattice(unittest.TestCase):
         with mp.get_context() as c:
             c.precision = 24
             coeffs = shallow_select_coeffs(N, 1)
-            blurred = binvert.sample_1D(signals, coeffs)
+            blurred = intvert.sample_1D(signals, coeffs)
 
             def key(beta2):
 
@@ -813,9 +813,9 @@ class Lattice(unittest.TestCase):
                 for n in range(n_sig):
 
                     try:
-                        inverted = binvert.invert_1D(blurred[n], known_coeffs=coeffs, beta2=beta2)
+                        inverted = intvert.invert_1D(blurred[n], known_coeffs=coeffs, beta2=beta2)
                         correct += np.allclose(inverted, signals[n])
-                    except binvert.InversionError:
+                    except intvert.InversionError:
                         pass
                 
                 print(f"beta2 = {beta2:.2e}; n_correct = {correct}")
@@ -876,7 +876,7 @@ class Lattice(unittest.TestCase):
                         context.precision = 400
 
                         known_coeffs = shallow_select_coeffs(N, M)
-                        blurred_signals = binvert.sample_1D(signals[L], known_coeffs)
+                        blurred_signals = intvert.sample_1D(signals[L], known_coeffs)
 
                         with self.subTest(N=N, M=M):
 
@@ -884,7 +884,7 @@ class Lattice(unittest.TestCase):
                                 correct = 0
                                 for n in range(self.n_sig):
                                     try:
-                                        inverted = binvert.invert_1D(blurred_signals[n], known_coeffs, beta2=beta2)
+                                        inverted = intvert.invert_1D(blurred_signals[n], known_coeffs, beta2=beta2)
                                         correct += np.allclose(inverted, signals[L][n])
                                     except:
                                         pass
@@ -973,11 +973,11 @@ class Lattice(unittest.TestCase):
 
                 signals = self.rand.binomial(N, 0.5, (n_sig, N))
 
-                from binvert.invert import _approximate_svp, _get_basis_matrix
+                from intvert.invert import _approximate_svp, _get_basis_matrix
                 factors = sp.primefactors(N)
                 # for M in range(1, min(reduced(N) // 2, 4)):
                 known_coeffs = shallow_select_coeffs(N, M)
-                blurred = binvert.sample_1D(signals, known_coeffs)
+                blurred = intvert.sample_1D(signals, known_coeffs)
 
                 n_shorter = 0
                 n_correct = 0
@@ -991,7 +991,7 @@ class Lattice(unittest.TestCase):
                     signal = signals[n]
                     K = None
 
-                    dft = binvert.mp_dft(signal)
+                    dft = intvert.mp_dft(signal)
                     decimated = {}
                     for p in factors:
                         decimated[N // p] = np.round(np.fft.ifft(dft[::p].astype(complex)).real).astype(int)
@@ -1015,7 +1015,7 @@ class Lattice(unittest.TestCase):
                     def check():
                         for vector in reduced_basis:
                             for sign in [-1, 1]:
-                                if np.allclose(binvert.mp_round(sign * vector[:N] + blurred[n]), signal):
+                                if np.allclose(intvert.mp_round(sign * vector[:N] + blurred[n]), signal):
                                     return True
                         return False
                     # solved[n] |= check()
@@ -1172,9 +1172,9 @@ class Matrix(unittest.TestCase):
         for M in range(1, 10):
             print(f"M = {M}")
             # known_coeffs = binvert.select_coeffs_2D(N1, N2, [M] * sp.divisor_count(N1 * N2))
-            known_coeffs = binvert.select_coeffs_2D(N1, N2, M)
+            known_coeffs = intvert.select_coeffs_2D(N1, N2, M)
             n_coeffs = int(sum(map(lambda set: sum(map(len, set)), known_coeffs.values())))
-            blurred = binvert.sample_2D(signals, known_coeffs)
+            blurred = intvert.sample_2D(signals, known_coeffs)
 
             stime = time()
             if M < np.lcm(N1, N2):
@@ -1182,7 +1182,7 @@ class Matrix(unittest.TestCase):
                 for n in range(self.n_sig):
 
                     try:
-                        inverted = binvert.invert_2D(blurred[n], known_coeffs, beta2=1e14, epsilon=1e-10)
+                        inverted = intvert.invert_2D(blurred[n], known_coeffs, beta2=1e14, epsilon=1e-10)
                         correct += np.allclose(inverted - signals[n], 0)
                     except:
                         pass
@@ -1346,18 +1346,18 @@ class Matrix(unittest.TestCase):
         
         print(f"Theoretical beta2: top level: {theoretical_beta2(N, 1, N*np.max(image)):.2e}; subproblem max: {max(theoretical_beta2(d, 1, N**2*np.max(image)//d) for d in sp.divisors(N)[2:]):.2e}")
 
-        known_coeffs = binvert.select_coeffs_2D(N, N, M)
+        known_coeffs = intvert.select_coeffs_2D(N, N, M)
 
         print("Number of coefficients required for recovery:", sum(map(len, known_coeffs.values())))
         print("Number of coefficients used for recovery:", sum(map(lambda set: sum(map(len, set)), known_coeffs.values())))
 
-        blurred = binvert.sample_2D(image, known_coeffs)
+        blurred = intvert.sample_2D(image, known_coeffs)
         if check:
             with mp.get_context() as c:
                 c.precision = prec
-                blurred = binvert.sample_2D(image, known_coeffs)
+                blurred = intvert.sample_2D(image, known_coeffs)
                 # blurred = binvert.sample_2D(image)
-                inverted = binvert.invert_2D(blurred, known_coeffs, beta2=beta2)
+                inverted = intvert.invert_2D(blurred, known_coeffs, beta2=beta2)
                 # inverted = binvert.invert_2D(blurred, beta2=beta2, epsilon=1e-10)
                 self.assertTrue(np.allclose(inverted, image), "Correct Recovery")
         else:
@@ -1555,7 +1555,7 @@ class Misc(unittest.TestCase):
 
     def search_space(self, M = 30, N = 30, L = 1):
         
-        all_coeff_classes = binvert.get_coeff_classes_2D(M, N, False)
+        all_coeff_classes = intvert.get_coeff_classes_2D(M, N, False)
         n_coeffs = sum(map(len, all_coeff_classes.values()))
         print(f"Number of coefficient classes: {n_coeffs}")
 
@@ -1576,7 +1576,7 @@ class Misc(unittest.TestCase):
                 
         print(f"Total search space size: {total_size:.2e}")
 
-        all_coeffs =  [set(fset).pop() for fset in chain(*binvert.select_coeffs_2D(M, N).values())]
+        all_coeffs =  [set(fset).pop() for fset in chain(*intvert.select_coeffs_2D(M, N).values())]
         mat = np.reshape([[[np.exp(-2j * np.pi * (k * m / M + l * n / N)) for m in range(M)] for n in range(N)] for k, l in all_coeffs], (-1, M * N))
         real_mat = np.concatenate([mat.real, mat.imag])
         pow = (M * N - 2 * n_coeffs + 4 - (M * N) % 2 - M % 2 - N % 2)

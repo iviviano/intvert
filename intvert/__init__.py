@@ -1,4 +1,4 @@
-"""Description
+"""
 """
 
 from .sample import (

@@ -25,7 +25,16 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
     'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
 ]
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+}
+
+# For other params to be separated
+napoleon_use_param = False
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
@@ -46,7 +55,7 @@ import intvert
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 
@@ -60,7 +69,7 @@ fnames = ["mp_dft", "mp_idft", "mp_dft2", "mp_idft2", "get_coeff_classes_1D", "g
 def process_docstring(app, what, name, obj, options, lines):
     for i in range(len(lines)):
         for fname in fnames:
-            lines[i] = re.sub(f'`{fname}`', f':doc:`{fname} <intvert.{fname}>`', lines[i])
+            lines[i] = re.sub(f'`{fname}`', f':py:func:`{fname} <intvert.{fname}>`', lines[i])
     # You can add more complex substitution logic here
 
 def setup(app):
