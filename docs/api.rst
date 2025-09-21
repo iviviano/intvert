@@ -1,11 +1,11 @@
 API Reference
 =============
 
-The package is separated into three groups of procedures. The `Fourier Transforms <ft>` perform 1D and 2D discrete Fourier transforms (DFT's) with mixed precision floating point operations. The `Sampling <sample>` partition DFT frequencies and sample signals at partial sets of frequencies. The `Inversion <invert>` procedures invert sampled integer signals.
+The package is separated into three groups of procedures. The :ref:`Fourier Transforms <ft>` perform 1D and 2D discrete Fourier transforms (DFT's) with mixed precision floating point operations. The :ref:`Sampling <sample>` partition DFT frequencies and sample signals at partial sets of frequencies. The :ref:`Inversion <invert>` procedures invert sampled integer signals.
 
 .. currentmodule:: intvert
 
-.. _ft::
+.. _ft:
 
 Fourier Transforms
 ------------------
@@ -18,7 +18,8 @@ Fourier Transforms
 	mp_dft2
 	mp_idft2
 
-.. _sample::
+.. _sample:
+
 Sampling
 --------
 
@@ -32,7 +33,8 @@ Sampling
 	sample_1D
 	sample_2D
 
-.. _invert::
+.. _invert:
+
 Inversion
 ---------
 

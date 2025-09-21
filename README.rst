@@ -11,7 +11,7 @@ Examples
 >>> import gmpy2 
 >>> 
 >>> gen = np.random.default_rng(0)
->>> signal = gen.integers(0, 2, (30, 40))
+>>> signal = gen.integers(0, 2, (30, 40)) # generate random binary matrix signal
 >>> signal
 array([[1, 1, 1, ..., 0, 0, 0],
        [0, 0, 0, ..., 1, 1, 0],
@@ -19,7 +19,7 @@ array([[1, 1, 1, ..., 0, 0, 0],
        ...,
        [0, 1, 0, ..., 1, 1, 1],
        [1, 1, 1, ..., 0, 0, 1],
-       [1, 1, 1, ..., 1, 1, 0]], shape=(30, 40)) # random binary signal
+       [1, 1, 1, ..., 1, 1, 0]], shape=(30, 40)) 
 >>> with gmpy2.get_context() as c: # perform sampling and inversion with increased precision
 ...     c.precision = 100
 ...     sampled = intvert.sample_2D(signal)
