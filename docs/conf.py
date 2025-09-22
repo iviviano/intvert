@@ -27,6 +27,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx_rtd_theme',
+    'numpydoc'
 ]
 
 intersphinx_mapping = {
@@ -47,6 +48,14 @@ import numpy as np
 import gmpy2
 import intvert
 """
+
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+}
+numpydoc_class_members_toctree = False
+add_module_names = False
+
 
 # rst_prolog = """
 # .. include:: _links.rst
@@ -71,6 +80,7 @@ def process_docstring(app, what, name, obj, options, lines):
     for i in range(len(lines)):
         for fname in fnames:
             lines[i] = re.sub(f'`{fname}`', f':py:func:`{fname} <intvert.{fname}>`', lines[i])
+        lines[i] = re.sub(f'`gmpy2 context`', f'`gmpy2 context <https://gmpy2.readthedocs.io/en/stable/contexts.html>`_', lines[i])
     # You can add more complex substitution logic here
 
 def setup(app):

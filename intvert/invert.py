@@ -89,7 +89,7 @@ class InversionError(Exception):
 	beta2: float
 		The value of the lattice parameter beta2.
 	precision: int
-		The number of bits of precision in the current `gmpy2` context.
+		The number of bits of precision in the current `gmpy2 context`.
 	epsilon: float
 		The value of the tolerance parameter epsilon.
 	"""
@@ -160,13 +160,6 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
 	Notes
 	-----
 	This dynamic programming implementation of 1D inversion iterates through the divisors :math:`d` of the signal size `N = len(signal)`. Each iteration requires solving an integer linear program in :math:`d` variables. The integer program is reduced to the shortest vector problem by constructing a lattice basis with reduction parameters :math:`\beta_0,\beta_1,\beta_2` [LV]_. This shortest vector problem is solved with the LLL approximation algorithm [LLL]_ using the given value of :math:`\delta`. The vector returned by LLL is rejected if the known part of its DFT does not match `signal` to absolute tolerance `epsilon`, causing an `InversionError`.
-
-
-	References
-	----------
-	.. [LLL] Lenstra, A.K., Lenstra, H.W. & Lovász, L. Factoring polynomials with rational coefficients. Math. Ann. 261, 515–534 (1982). https://doi.org/10.1007/BF01457454
-
-	.. [LV] TODO
 
 
 	Examples

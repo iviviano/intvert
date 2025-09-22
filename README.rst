@@ -38,7 +38,10 @@ True
 
 References
 ----------
+.. [LLL] Lenstra, A.K., Lenstra, H.W. & Lovász, L. Factoring polynomials with rational coefficients. Math. Ann. 261, 515–534 (1982). https://doi.org/10.1007/BF01457454
 .. [LV] TODO
+.. [PC] S. -C. Pei and K. -W. Chang, "Binary Signal Perfect Recovery From Partial DFT Coefficients," in IEEE Transactions on Signal Processing, vol. 70, pp. 3848-3861, 2022, doi: 10.1109/TSP.2022.3190615. 
+
 
 Requirements
 ------------

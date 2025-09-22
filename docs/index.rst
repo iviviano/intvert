@@ -1,11 +1,6 @@
 .. .. toctree:: _autosummary_functions
 ..    :tocdepth: 2
 
-.. _home::
-
-intvert Documentation
-============================
-
 .. include:: ../README.rst
 
 Contents

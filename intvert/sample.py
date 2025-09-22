@@ -25,7 +25,7 @@ def my_vectorize(**vecargs):
 def mp_dft(signal):
     r"""Compute the 1D discrete Fourier transform of a signal.
 
-    This function computes the 1D discrete Fourier transform (DFT) along the last axis `signal`.
+    This function computes the 1D discrete Fourier transform (DFT) along the last axis `signal` at the precision specified by the current `gmpy2 context`.
 
     Parameters
     ----------
@@ -44,7 +44,7 @@ def mp_dft(signal):
 
     Notes
     -----
-    The algorithm used by this procedure depends on the current precision of the `gmpy2` context. If the current precision is at most double, the input is cast to numpy floats and the Fast Fourier transform is computed with the :py:func:`numpy:numpy.fft.fft` procedure. If the precision of the current context is greater than 53 bits, the DFT is computed with standard matrix-vector multiplication.
+    The algorithm used by this procedure depends on the current precision of the `gmpy2 context`. If the current precision is at most double, the input is cast to numpy floats and the Fast Fourier transform is computed with the :py:func:`numpy:numpy.fft.fft` procedure. If the precision of the current context is greater than 53 bits, the DFT is computed with standard matrix-vector multiplication.
 
     The DFT convention used in this implementation is
 
@@ -72,7 +72,7 @@ def mp_dft(signal):
 def mp_dft2(signal):
     r"""Compute the 2D discrete Fourier transform of a signal.
 
-    This function computes the 2D discrete Fourier transform (DFT) along the last two axes of `signal`.
+    This function computes the 2D discrete Fourier transform (DFT) along the last two axes of `signal` at the precision specified by the current `gmpy2 context`.
 
     Parameters
     ----------
@@ -105,7 +105,6 @@ def mp_dft2(signal):
 
     """
 
-
     intermediate = [mp_dft(row) for row in signal]
     return np.transpose([mp_dft(row) for row in np.transpose(intermediate)])
 
@@ -113,7 +112,7 @@ def mp_dft2(signal):
 def mp_idft(signal):
     r"""Compute the 1D inverse discrete Fourier transform of a signal.
 
-    This function computes the inverse of the 1D discrete Fourier transform along the last axis of `signal`, at the precision specified by the current `gmpy2` context. 
+    This function computes the inverse of the 1D discrete Fourier transform along the last axis of `signal`, at the precision specified by the current `gmpy2 context`. 
 
     Parameters
     ----------
@@ -156,7 +155,7 @@ def mp_idft(signal):
 def mp_idft2(signal): 
     r"""Compute the 2D inverse discrete Fourier transform of a signal.
 
-    This function computes the inverse of the 2D discrete Fourier transform along the last two axes of `signal`, at the precision specified by the current `gmpy2` context. 
+    This function computes the inverse of the 2D discrete Fourier transform along the last two axes of `signal`, at the precision specified by the current `gmpy2 context`. 
 
     Parameters
     ----------
@@ -246,10 +245,6 @@ def get_coeff_classes_1D(N, include_conjugates=True):
     -----
     If :math:`{\bf x}` is an integer signal of length `N`, two DFT coefficients :math:`\tilde{x}_k` and :math:`\tilde{x}_l` are equivalent if :math:`\gcd(k, N)=\gcd(l, N)` [PC]_. Assuming :math:`{\bf x}` is real implies :math:`\tilde{x}_k = \tilde{x}_{N - k}^*`, so these DFT coefficients are trivially equivalent.
 
-    References
-    ----------
-    .. [PC] S. -C. Pei and K. -W. Chang, "Binary Signal Perfect Recovery From Partial DFT Coefficients," in IEEE Transactions on Signal Processing, vol. 70, pp. 3848-3861, 2022, doi: 10.1109/TSP.2022.3190615. 
-
     Examples
     --------
     >>> intvert.get_coeff_classes_1D(6)
@@ -290,10 +285,6 @@ def get_coeff_classes_2D(M, N, include_conjugates=True):
     Notes
     -----
     If :math:`{\bf X}` is an integer matrix of size `M, N`, two DFT coefficients :math:`\tilde{X}_{kl}` and :math:`\tilde{X}_{k'l'}` are equivalent if there exists `\lambda` relatively prime with `M` and `N` such that :math:`k = \lambda k' \pmod{M}` and :math:`l = \lambda l' \pmod{N}` [LV]_. Assuming :math:`{\bf X}` is real implies :math:`\tilde{X}_{kl} = \tilde{X}_{M - k, N - l}^*`, so these DFT coefficients are trivially equivalent.
-
-    References
-    ----------
-    .. [LV] TODO
 
     Examples
     --------
