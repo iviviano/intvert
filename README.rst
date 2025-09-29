@@ -44,7 +44,9 @@ Installation
 
 intvert may be installed with pip.
 
->>> pip install intvert
+.. code-block:: bash
+
+       pip install intvert
 
 
 References

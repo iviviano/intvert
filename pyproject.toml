@@ -1,0 +1,20 @@
+[project]
+name = "intvert"
+version = "0.0.1"
+authors = [
+  { name="Isaac Viviano", email="16isaac.viviano@gmail.com" },
+]
+description = "A package for inversion of integer signals from sampled DFT coefficients."
+readme = "README.rst"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://github.com/https://github.com/iviviano/intvert"
+Issues = "https://github.com/https://github.com/iviviano/intvert/issues"
+Documentation = "https://intvert.readthedocs.io/en/latest/"
