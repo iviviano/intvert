@@ -6,3 +6,4 @@ cysignals
 sphinx
 numpydoc
 sphinx_rtd_theme
+sphinx_copybutton
