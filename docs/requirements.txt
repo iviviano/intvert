@@ -5,4 +5,3 @@ fpylll
 cysignals
 sphinx
 sphinx_rtd_theme
-numpydoc
