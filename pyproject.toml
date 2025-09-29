@@ -1,12 +1,19 @@
 [project]
 name = "intvert"
-version = "0.0.1"
+version = "0.0.1post1"
 authors = [
   { name="Isaac Viviano", email="16isaac.viviano@gmail.com" },
 ]
 description = "A package for inversion of integer signals from sampled DFT coefficients."
 readme = "README.rst"
 requires-python = ">=3.9"
+dependencies = [
+  "numpy",
+  "sympy",
+  "gmpy2",
+  "fpylll",
+  "cysignals",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
