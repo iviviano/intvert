@@ -1,8 +1,5 @@
 # Configuration file for the Sphinx documentation builder.
 #
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
 
 # -- Path setup --------------------------------------------------------------
 import os
@@ -27,7 +24,6 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx_rtd_theme',
-    'numpydoc'
 ]
 
 intersphinx_mapping = {
@@ -35,8 +31,8 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable/', None),
 }
 
-# For other params to be separated
-napoleon_use_param = False
+napoleon_numpy_docstring = True
+napoleon_google_docstring = False
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
@@ -56,11 +52,7 @@ autodoc_default_options = {
 numpydoc_class_members_toctree = False
 add_module_names = False
 
-
-# rst_prolog = """
-# .. include:: _links.rst
-# """
-
+import numpydoc.docscrape as nds
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -68,7 +60,7 @@ add_module_names = False
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
-
+html_search = True
 
 # -- Substitutions for Cross References ------------
 
@@ -79,9 +71,8 @@ fnames = ["mp_dft", "mp_idft", "mp_dft2", "mp_idft2", "get_coeff_classes_1D", "g
 def process_docstring(app, what, name, obj, options, lines):
     for i in range(len(lines)):
         for fname in fnames:
-            lines[i] = re.sub(f'`{fname}`', f':py:func:`{fname} <intvert.{fname}>`', lines[i])
+            lines[i] = re.sub(f'``{fname}``', f':py:func:`{fname} <intvert.{fname}>`', lines[i])
         lines[i] = re.sub(f'`gmpy2 context`', f'`gmpy2 context <https://gmpy2.readthedocs.io/en/stable/contexts.html>`_', lines[i])
-    # You can add more complex substitution logic here
 
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)

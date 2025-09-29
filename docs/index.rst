@@ -5,17 +5,12 @@
 
 Contents
 ========
-View the API reference :doc:`here <api>`.
+
+* :doc:`API reference <api>`
+* :ref:`genindex`
 
 .. toctree::
    :hidden:
    :maxdepth: 1
 
    api
-
-Indices and Tables
-==================
-
- * :ref:`genindex`
- * :ref:`modindex`
- * :ref:`search`

@@ -6,6 +6,9 @@ intvert is a pure Python package for inversion of 1D and 2D integer arrays from 
 
 Examples
 --------
+
+An example usage of the sampling and inversion procedures in 2D for a large binary matrix.
+
 >>> import intvert
 >>> import numpy as np
 >>> import gmpy2 
@@ -36,6 +39,14 @@ array([[1, 1, 1, ..., 0, 0, 0],
 >>> np.allclose(signal, inverted) # inverted signal matches signal
 True
 
+Installation
+------------
+
+intvert may be installed with pip.
+
+>>> pip install intvert
+
+
 References
 ----------
 .. [LLL] Lenstra, A.K., Lenstra, H.W. & Lovász, L. Factoring polynomials with rational coefficients. Math. Ann. 261, 515–534 (1982). https://doi.org/10.1007/BF01457454
@@ -45,7 +56,7 @@ References
 
 Requirements
 ------------
-``intvert`` relies on the following Python packages:
+intvert relies on the following Python packages:
  - `numpy <https://numpy.org/doc/stable/>`_ for fast array operations
  - `gmpy2 <https://gmpy2.readthedocs.io/en/stable/>`_ for multiple precision floating point operations
  - `fpylll <https://fpylll.readthedocs.io/en/stable/>`_ for implementations of the LLL lattice basis reduction algorithm

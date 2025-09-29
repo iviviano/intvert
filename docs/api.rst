@@ -1,7 +1,7 @@
 API Reference
 =============
 
-The package is separated into three groups of procedures. The :ref:`Fourier Transforms <ft>` perform 1D and 2D discrete Fourier transforms (DFT's) with mixed precision floating point operations. For DFT conventions in 1D and 2D, see `mp_dft` and `mp_dft2`, respectively. The :ref:`Sampling <sample>` partition DFT frequencies and sample signals at partial sets of frequencies. The :ref:`Inversion <invert>` procedures invert sampled integer signals. The inversion algorithms implement the efficient dynammic programming algorithms in [LV]_.
+The package is separated into three groups of procedures. The :ref:`Fourier Transforms <ft>` perform 1D and 2D discrete Fourier transforms (DFT's) with mixed precision floating point operations. For DFT conventions in 1D and 2D, see :py:func:`mp_dft <intvert.mp_dft>` and :py:func:`mp_dft2 <intvert.mp_dft2>`, respectively. The :ref:`Sampling <sample>` partition DFT frequencies and sample signals at partial sets of frequencies. The :ref:`Inversion <invert>` procedures invert sampled integer signals. The inversion algorithms implement the efficient dynammic programming algorithms in [LV]_.
 
 .. currentmodule:: intvert
 
@@ -48,4 +48,4 @@ Inversion
 
 Examples
 --------
-For examples, see the various functions.
+For examples, see the various functions. For all examples, it is assumed that the modules ``binvert``, ``numpy``, and ``gmpy2`` have been imported.

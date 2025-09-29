@@ -3,24 +3,19 @@ import gmpy2 as mp
 import sympy as sp
 from itertools import product, chain
 from functools import wraps
-# from decorator import set_module
 
-# def my_vectorize(**kwargs):
 def my_vectorize(**vecargs):
+    """Apply np.vectorize to a py func and keep its docstring.
+    """
     def helper(func):
-        # @np.vectorize(**kwargs)
         @wraps(func)
-        # @set_module("intvert")
         def wrapper(*args, **kwargs):
             return np.vectorize(func, **vecargs)(*args, **kwargs)
-
-        # wrapper.__module__ = "intvert"
 
         return wrapper
 
     return helper
 
-# @np.vectorize(signature="(n)->(n)")
 @my_vectorize(signature="(n)->(n)")
 def mp_dft(signal):
     r"""Compute the 1D discrete Fourier transform of a signal.
@@ -39,7 +34,7 @@ def mp_dft(signal):
 
     See also
     --------
-    mp_idft : inverse of `mp_dft`
+    mp_idft : inverse of ``mp_dft``
     mp_dft2 : analogous 2D function
 
     Notes
@@ -58,15 +53,12 @@ def mp_dft(signal):
 
     """
 
-    if mp.get_context().precision <= 53:
-        # print("Using np.fft")
+    if mp.get_context().precision <= 53: # with <= double precision, use np.fft
         return np.fft.fft(signal.astype(complex)).astype(mp.mpc)
 
     N = len(signal)
 
-    # root = mp.root_of_unity(N, N - 1)
-    # return np.vander(root ** np.arange(N), N, increasing = True) @ signal
-    return np.array([[mp.root_of_unity(N, (N - 1) * n * k % N) for k in range(N)] for n in range(N)]) @ signal
+    return np.array([[mp.root_of_unity(N, (N - 1) * n * k % N) for k in range(N)] for n in range(N)]) @ signal # otherwise, matrix multiplication
 
 @my_vectorize(signature="(m,n)->(m,n)")
 def mp_dft2(signal):
@@ -86,12 +78,12 @@ def mp_dft2(signal):
 
     See also
     --------
-    mp_idft2 : inverse of `mp_dft2`
+    mp_idft2 : inverse of ``mp_dft2``
     mp_dft : analogous 1D function
 
     Notes
     -----
-    This function is implemented with `mp_dft`. For algorithm notes, see `mp_dft`.
+    This function is implemented with ``mp_dft``. For algorithm notes, see ``mp_dft``.
 
     The DFT convention used in this implementation is
 
@@ -108,7 +100,6 @@ def mp_dft2(signal):
     intermediate = [mp_dft(row) for row in signal]
     return np.transpose([mp_dft(row) for row in np.transpose(intermediate)])
 
-# @set_module("intvert")
 def mp_idft(signal):
     r"""Compute the 1D inverse discrete Fourier transform of a signal.
 
@@ -126,17 +117,17 @@ def mp_idft(signal):
 
     See also
     --------
-    mp_dft : inverse of `mp_idft`
+    mp_dft : inverse of ``mp_idft``
     mp_idft2 : analogous 2D function
 
     Notes
     -----
-    This function is implemented with `mp_dft`. For conventions and algorithm notes, see `mp_dft`.
+    This function is implemented with ``mp_dft``. For conventions and algorithm notes, see ``mp_dft``.
 
     Examples
     --------
 
-    When more than 53 bits of precision are used, `mp_dft` and `mp_idft` yield higher numerical accuracy than :py:func:`numpy:numpy.fft.fft` and :py:func:`numpy:numpy.fft.ifft`:
+    When more than 53 bits of precision are used, ``mp_dft`` and ``mp_idft`` yield higher numerical accuracy than :py:func:`numpy:numpy.fft.fft` and :py:func:`numpy:numpy.fft.ifft`:
 
     >>> signal = np.arange(19)
     >>> max(abs(np.fft.ifft(np.fft.fft(signal)) - signal))
@@ -151,7 +142,6 @@ def mp_idft(signal):
 
     return np.conj(mp_dft(np.conj(signal))) / signal.shape[-1]
 
-# @set_module("intvert")
 def mp_idft2(signal): 
     r"""Compute the 2D inverse discrete Fourier transform of a signal.
 
@@ -169,17 +159,17 @@ def mp_idft2(signal):
 
     See also
     --------
-    mp_dft2 : inverse of `mp_idft2`
+    mp_dft2 : inverse of ``mp_idft2``
     mp_idft : analogous 1D function
 
     Notes
     -----
-    This function is implemented with `mp_dft2`. For conventions and algorithm notes, see `mp_dft2`.
+    This function is implemented with ``mp_dft2``. For conventions and algorithm notes, see ``mp_dft2``.
 
     Examples
     --------
 
-    When more than 53 bits of precision are used, `mp_dft2` and `mp_idft2` yield higher numerical accuracy than :py:func:`numpy:numpy.fft.fft2` and :py:func:`numpy:numpy.fft.ifft2`:
+    When more than 53 bits of precision are used, ``mp_dft2`` and ``mp_idft2`` yield higher numerical accuracy than :py:func:`numpy:numpy.fft.fft2` and :py:func:`numpy:numpy.fft.ifft2`:
 
     >>> signal = np.arange(30).reshape(5, 6)
     >>> np.max(abs(np.fft.ifft2(np.fft.fft2(signal)) - signal))
@@ -189,31 +179,19 @@ def mp_idft2(signal):
     ...     np.max(abs(intvert.mp_idft2(intvert.mp_dft2(signal)) - signal))
     ... 
     mpfr('1.9957852381702224870373111645968013799923440139299733596839611e-59',200)
-
     """
     
     return np.conj(mp_dft2(np.conj(signal))) / np.prod(signal.shape[-2:])
 
 
-real_doc = """Return the real part of a complex argument.
-
-Parameters
-----------
-val: mpc array_like
-Input mpc array or scalar.
-
-Returns
--------
-mpc ndarray or scalar
-The real component of the complex argument. The type of val for the output will be mpfr.
-"""
-
-mp_real = np.vectorize(lambda x: x.real, doc=real_doc)
-mp_imag = np.vectorize(lambda x: x.imag)
-mp_round = np.vectorize(lambda x: mp.rint(x))
+mp_real = np.vectorize(lambda x: x.real, doc="Vectorized real part of an mpc np.ndarray")
+mp_imag = np.vectorize(lambda x: x.imag, doc="Vectorized imaginary part of an mpc np.ndarray")
+mp_round = np.vectorize(lambda x: mp.rint(x), doc="Vectorized round an mpfr np.ndarray to integers")
 
 
 def _to_1D(coeff_classes_2D):
+    """Restructure a dictionary of 2D DFT equivalence classes as 1D, assuming N = 1
+    """
 
     return {divisor: {k for k, _ in coeff_classes_2D[divisor, 1].pop()} for   divisor, _ in coeff_classes_2D}
 
@@ -274,7 +252,7 @@ def get_coeff_classes_2D(M, N, include_conjugates=True):
 
     Returns
     -------
-    Dict[int, Set[int]]
+    Dict[Tuple[int, int], Set[FrozenSet[Tuple[int, int]]]]
         Dictionary mapping pairs of divisors of `M` and `N` to sets of coefficient classes.
 
     See also
@@ -303,8 +281,6 @@ def get_coeff_classes_2D(M, N, include_conjugates=True):
         if found[k, l]:
             continue
 
-        # gcd_m, gcd_n = int(np.gcd(k, M)), int(np.gcd(l, N))
-        # gcd = gcd_m, gcd_n
         gcd = int(np.gcd(k, M)), int(np.gcd(l, N))
 
         eclass = frozenset((k * lam % M, l * lam % N) for lam in range(np.lcm(M, N)) if np.gcd(lam, N * M) == 1)
@@ -319,11 +295,14 @@ def get_coeff_classes_2D(M, N, include_conjugates=True):
         else:
             classes[gcd].add(eclass)
 
-
     return classes
 
 
 def _get_lattice_level(k, l, M, N=1): # levels indexed 1, 2, ... starting at top level with coefficient (0, 0)
+    """Level of the subgroup generated by `(k, l)` in the lattice of cyclic subgroups of Z_M x Z_N.
+
+    Levels are 1-indexed with level 1 containing the identity and <(1, 1)> on the highest level.
+    """
 
     order_M = M // np.gcd(k, M)
     order_N = N // np.gcd(l, N)
@@ -331,9 +310,6 @@ def _get_lattice_level(k, l, M, N=1): # levels indexed 1, 2, ... starting at top
     return sum(sp.factorint(order).values()) + 1
 
 
-    # Constructs a dictionary mapping divisors of `N` to sets of equivalent DFT coefficient frequencies for an integer signal of length `N`. The divisor d is mapped to a set of DFT frequencies containing integers between 0 and `N` - 1 whose greatest common divisor with `N` is d. The number of frequencies in this set is determined by `Ls`. If `Ls` is an integer, the number of frequencies in `selected[1]` is `Ls`, and each other set of frequencies has one element. If `Ls` is a list, `Ls[i]` is the number of frequencies in `selected[d]` if `d` generates a cyclic subgroup at the `i`'th level of the subgroup lattice of :math:`\mathbb{Z}_N`. If `Ls[i]` is larger than the number of generators of `selected[d]` which are between `0` and `N / 2`, `selected[d]` is just this maximal set of such generators.
-
-# @set_module("intvert")
 def select_coeffs_1D(N, Ls=[]):
     r"""Selects a set of DFT coefficient frequencies.
 
@@ -373,13 +349,11 @@ def select_coeffs_1D(N, Ls=[]):
 
     >>> intvert.select_coeffs_1D(10, [2]) 
     {10: {0}, 1: {1, 3}, 2: {2}, 5: {5}}
-    
     """ 
 
     return _to_1D(select_coeffs_2D(N, 1, Ls))
 
 
-# @set_module("intvert")
 def select_coeffs_2D(M, N, Ls = []):
     r"""Selects a set of DFT coefficient frequencies.
 
@@ -396,7 +370,7 @@ def select_coeffs_2D(M, N, Ls = []):
 
     Returns
     -------
-    selected: Dict[int, Set[Frozenset[Tuple[int, int]]]]
+    selected: Dict[Tuple[int, int], Set[FrozenSet[Tuple[int, int]]]]
         Dictionary of selected coefficients.
 
     See also
@@ -429,34 +403,26 @@ def select_coeffs_2D(M, N, Ls = []):
 
     """ 
 
+	# Set up list of number of coefficients by lattice depth
     lattice_depth = _get_lattice_level(1, 1, M, N)
-    assert lattice_depth == sum(sp.factorint(np.lcm(M, N)).values()) + 1
-
     try:
-        # Ls = [L for L in Ls]
         Ls = [L for L in Ls] + [1] * (lattice_depth - len(Ls))
     except TypeError:
-        # Ls = [Ls]
         Ls = [Ls] * lattice_depth
-    # finally:
-    #     Ls = Ls + [1] * (lattice_depth - len(Ls))
 
+	# Select coefficients from set of all classes
     all_selected_coeffs = {}
-    def key(coeff):
-        k, l = coeff
-        return -abs(k - M // 2) - abs(l - N // 2)
-        return coeff
-
     for (d1, d2), classes in get_coeff_classes_2D(M, N, include_conjugates=False).items():
         all_selected_coeffs[d1, d2] = set()
         for coeff_class in classes:
-            coeff_class = list(sorted(coeff_class, key=key))
+            coeff_class = list(sorted(coeff_class))
             k, l = coeff_class[0]
             L = Ls[-_get_lattice_level(k, l, M, N)]
             selected_coeffs = coeff_class[:L]
             all_selected_coeffs[d1, d2].add(frozenset(selected_coeffs))
 
     return all_selected_coeffs
+
 
 @my_vectorize(signature="(N)->(N)", excluded={1, "known_coeffs"})
 def sample_1D(signal, known_coeffs=None):
@@ -466,10 +432,10 @@ def sample_1D(signal, known_coeffs=None):
 
     Parameters
     ----------
-    signal : ndarray
+    signal : arraylike
         Signal to be sampled.
     known_coeffs : Dict, optional
-        Dictionary of coefficients to sample, structured as in `get_coeff_classes_1D`, by default None
+        Dictionary of coefficients to sample, structured as in ``get_coeff_classes_1D``, by default None
 
     Returns
     -------
@@ -490,15 +456,18 @@ def sample_1D(signal, known_coeffs=None):
         \overline{x}_n = \sum_{k \in S} \tilde{x}_k e^{-2\pi{\rm i}nk/N}.
     """
 
+    # Generate sampling mask
     N = len(signal)
     mask = np.zeros(N, dtype=bool)
     known_coeffs = np.array(sum(map(list, known_coeffs.values()), []) if known_coeffs else sp.divisors(N), dtype=int) % N
     mask[known_coeffs] = 1
     mask[-known_coeffs] = 1
 
+    # Apply mask in frequency space
     dft = mp_dft(signal)
     dft[~mask] = 0
     return mp_real(mp_idft(dft))
+
 
 @my_vectorize(signature="(M,N)->(M,N)", excluded={1, "known_coeffs"})
 def sample_2D(signal, known_coeffs={}):
@@ -508,10 +477,10 @@ def sample_2D(signal, known_coeffs={}):
 
     Parameters
     ----------
-    signal : ndarray
+    signal : arraylike
         Signal to be sampled.
     known_coeffs : Dict, optional
-        Dictionary of coefficients to sample, structured as in `get_coeff_classes_2D`, by default None
+        Dictionary of coefficients to sample, structured as in ``get_coeff_classes_2D``, by default None
 
     Returns
     -------
@@ -532,19 +501,16 @@ def sample_2D(signal, known_coeffs={}):
         \overline{X}_{mn} = \sum_{(k, l) \in S} \tilde{X}_{kl} e^{-2\pi{\rm i}(mk/N_1 + nl/N_2)}.
     """
 
+	# Generate sampling mask
     M, N = signal.shape
-
     known_coeffs = known_coeffs if known_coeffs else select_coeffs_2D(M, N)
-
-    # print(known_coeffs.values())
-
     mask = np.zeros((M, N), dtype=bool)
     for coeff_class in chain(*known_coeffs.values()):
-        # print(coeff_class)
         for k, l in coeff_class:
             mask[k, l] = True	
             mask[-k, -l] = True	
 
+    # Apply mask in frequency space
     dft = mp_dft2(signal)
     dft[~mask] = 0
     return mp_real(mp_idft2(dft))
