@@ -4,4 +4,5 @@ gmpy2
 fpylll
 cysignals
 sphinx
+numpydoc
 sphinx_rtd_theme

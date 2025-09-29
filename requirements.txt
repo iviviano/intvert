@@ -1,5 +1,0 @@
-numpy
-sympy
-gmpy2
-fpylll
-cysignals
