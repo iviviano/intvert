@@ -11,7 +11,7 @@ Fourier Transforms
 ------------------
 
 .. autosummary::
-	:toctree: _autosummary_functions
+	:toctree: .
 
 	mp_dft
 	mp_idft
@@ -24,7 +24,7 @@ Sampling
 --------
 
 .. autosummary::
-	:toctree: _autosummary_functions
+	:toctree: .
 
 	get_coeff_classes_1D
 	get_coeff_classes_2D
@@ -39,7 +39,7 @@ Inversion
 ---------
 
 .. autosummary::
-	:toctree: _autosummary_functions
+	:toctree: .
 
 	invert_1D
 	invert_2D

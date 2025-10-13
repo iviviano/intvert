@@ -42,7 +42,7 @@ True
 Installation
 ------------
 
-intvert may be installed with pip.
+intvert may be installed from `PyPI <https://pypi.org/project/intvert/>`_ with ``pip``.
 
 .. code-block:: bash
 

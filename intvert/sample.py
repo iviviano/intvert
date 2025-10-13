@@ -16,6 +16,8 @@ def my_vectorize(**vecargs):
 
     return helper
 
+_cache = {}
+
 @my_vectorize(signature="(n)->(n)")
 def mp_dft(signal):
     r"""Compute the 1D discrete Fourier transform of a signal.
@@ -53,12 +55,23 @@ def mp_dft(signal):
 
     """
 
-    if mp.get_context().precision <= 53: # with <= double precision, use np.fft
+    precision = mp.get_context().precision
+    if precision <= 53: # with <= double precision, use np.fft
         return np.fft.fft(signal.astype(complex)).astype(mp.mpc)
 
     N = len(signal)
 
-    return np.array([[mp.root_of_unity(N, (N - 1) * n * k % N) for k in range(N)] for n in range(N)]) @ signal # otherwise, matrix multiplication
+    # otherwise, matrix multiplication
+    last_prec = -1
+    if N in _cache:
+        matrix, last_prec = _cache[N]
+    if last_prec != precision:
+        # precompute the N possible N'th roots of unity
+        roots = [mp.root_of_unity(N, (N - 1) * n % N) for n in range(N)]
+        matrix = np.array([[roots[n * k % N] for k in range(N)] for n in range(N)])
+        _cache[N] = (matrix, precision)
+
+    return matrix @ signal 
 
 @my_vectorize(signature="(m,n)->(m,n)")
 def mp_dft2(signal):
@@ -97,8 +110,7 @@ def mp_dft2(signal):
 
     """
 
-    intermediate = [mp_dft(row) for row in signal]
-    return np.transpose([mp_dft(row) for row in np.transpose(intermediate)])
+    return mp_dft(mp_dft(signal).T).T
 
 def mp_idft(signal):
     r"""Compute the 1D inverse discrete Fourier transform of a signal.
