@@ -1,6 +1,6 @@
 [project]
 name = "intvert"
-version = "0.0.1post2"
+version = "0.1.0"
 authors = [
   { name="Isaac Viviano", email="16isaac.viviano@gmail.com" },
 ]
