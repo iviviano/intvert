@@ -195,6 +195,12 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
     InversionError
         If inversion fails for any subproblem. The current lattice parameter values are given, so they may be tuned to allow inversion.
 
+    See also
+    --------
+    sample_1D : constructing the sampled input
+    select_coeffs_1D : selecting a partial set of known DFT coefficients
+    invert_2D : analogous 2D function
+
     Other Parameters
     ----------------
     beta0 : float
@@ -209,12 +215,6 @@ def invert_1D(signal, known_coeffs={}, **lattice_params):
         LLL approximation parameter delta, by default 0.9972
     epsilon : float
         Absolute tolerance for verifying shortest vectors against DFT coefficient data.
-
-    See also
-    --------
-    sample_1D : constructing the sampled input
-    select_coeffs_1D : selecting a partial set of known DFT coefficients
-    invert_2D : analogous 2D function
 
     Notes
     -----
